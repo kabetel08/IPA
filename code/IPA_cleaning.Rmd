@@ -1,0 +1,722 @@
+---
+title: 'IPA'
+author: ""
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+  pdf_document: default
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+## I. Project Overview
+
+This file prepares household-level ACS data from IPUMS for analysis of
+housing cost burden and ownership trends in California.
+
+**Key assumptions:**
+
+-   Only the householder (PERNUM == 1) is used to represent
+    household-level traits
+-   Household and person weights are already scaled and applied as
+    provided
+-   ACS uses complex sampling; analysis accounts for clustering using
+    `survey::svydesign`
+-   Data for 2020 may have quality issues due to COVID-19 disruptions
+-   Income and housing costs are already CPI-adjusted in
+    \_CPIU_2010variables - Using : Race: Simplified race/ethnicity
+    identification [of Location of household head]
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## II. Set Up 
+
+### A. Load Libraries
+
+```{r warning =FALSE, message =FALSE}
+
+library(survey)      
+library(scales)      
+library(ggthemes)    
+library(ipumsr)
+library(tidyverse)
+library(here)
+library(pastecs)
+library(furniture)
+library(gridExtra)
+library(readxl)
+library(writexl)
+library(lubridate)
+library(modeest)
+library(stringr)
+library(fastLink)
+library(stargazer)
+library(psych)
+library(tibble)
+library(infer)
+library(purrr)
+library(ggrepel)
+library(latex2exp)
+library(haven)
+library(data.table)
+```
+
+### B. Clear memory
+
+```{r}
+rm(list = ls(all.names = TRUE))
+gc()
+```
+
+### C. Custom Functions
+
+```{r}
+#some self-created functions that I frequently use
+freq <- function(x) {
+frequency <- table(x, useNA = "ifany")
+proportion <- round(prop.table(table(x, useNA = "ifany"),),3)
+cbind(frequency, proportion)
+}
+
+freq_sort <- function(x) {
+frequency <- table(x, useNA = "ifany")
+proportion <- round(prop.table(table(x, useNA = "ifany"),),3)
+out <- cbind(frequency, proportion)
+out[order(out[,1],decreasing=TRUE),]
+}
+
+freq2 = function(x,y){
+table(x,y, useNA = "ifany")
+}
+
+freq2_col <-function(x,y){
+prop.table(table(x,y,useNA = "ifany"),2)
+}
+
+freq2_row <-function(x,y){
+prop.table(table(x,y,useNA = "ifany"),1)
+}
+
+  ttable <- function(dependent, by_variable){
+  level <- c("By variable=0", "By variable=1", "Difference")
+  means <- round(c(mean(dependent[by_variable==0], na.rm=TRUE),
+  mean(dependent[by_variable==1], na.rm=TRUE),
+  mean(dependent[by_variable==1], na.rm=TRUE) -
+  mean(dependent[by_variable==0], na.rm=TRUE)),3)
+  se_0 <- sd(dependent[by_variable==0],
+  na.rm=TRUE)/sqrt(sum(!is.na(dependent[by_variable==0])))
+  se_1 <- sd(dependent[by_variable==1],
+  na.rm=TRUE)/sqrt(sum(!is.na(dependent[by_variable==1])))
+  se_diff <-sqrt(se_0^2+ se_1^2)
+  se <- round(c(se_0, se_1, se_diff),3)
+  df_correction <- c(1,1,2)
+  N <- c(sum(!is.na(dependent[by_variable==0])) ,
+  sum(!is.na(dependent[by_variable==01])), sum(!is.na(dependent)))
+  results <- as.data.frame(cbind(level, means, se, N, df_correction))
+  results$means <-as.numeric(results$means)
+  results$se <-as.numeric(results$se)
+  results$N <-as.numeric(results$N)
+  results$df_correction <-as.numeric(results$df_correction)
+  ttable <- results %>%
+  mutate(t_stat = round(means/se,3),
+  df_t = N - df_correction,
+  p_value = 2*pt(abs(t_stat), df=df_t, lower.tail=FALSE)
+  ) %>%
+  select(level, means, se, t_stat, df_t, p_value )
+  rm(level, means, se_0, se_1, se_diff, se, df_correction, N, results)
+  ttable
+}
+
+```
+
+## III. Load IPUMS data 
+
+### A. Import Data and DDI File
+```{r}
+mem.maxVSize()
+if (!require("ipumsr")) stop("Reading IPUMS data into R requires the ipumsr package. It can be installed using the following command: install.packages('ipumsr')")
+ddi <- read_ipums_ddi("usa_00003.xml")
+data <- read_ipums_micro(ddi)
+print(object.size(data), units = "GB")
+```
+
+### B. Rename Variables to Lowercase
+```{r}
+# rename vars to lower
+names(data) <- tolower(names(data))
+```
+
+## IV. Descriptive Checks
+
+### A. General Summary
+```{r}
+# summary stats for the whole dataset 
+summary(data)
+```
+
+
+### B. Frequency Checks
+Notes:
+
+-   ownershp: Ownership of dwelling (tenure) [general version]
+
+-   ownershpd:Ownership of dwelling (tenure) [detailed version]
+
+-   Year= Census Year
+
+-   For the multi-year ACS/PRCS samples, YEAR indicates the last year of
+    data included
+
+-   For the actual year of survey in these multi-year data, see
+    MULTYEAR.
+
+-   MultYear = IPUMS year of survey , multi-year ACS/PRCS
+
+    -   MULTYEAR identifies the actual year of survey in multi-year
+        ACS/PRCS samples.
+    -   MULTYEAR gives the single-year sample from which the case was
+        drawn (2005, 2006, or 2007 for the 2005-2007 3-year data; 2006,
+        2007, or 2008 for the 2006-2008 3-year data; and so on).
+
+-   The distribution of records per year varies in the multiyear var
+    because we are looking at rolling samples.So for exmaple, the year
+    2015 will have records from the 2014-2018 and 2015-2019 sample. Thus
+    2014 and 2023 only have 1 year of data.
+
+
+```{r freq-checks}
+# age
+freq(data$age)
+
+#state
+freq(data$statefip)
+
+# race
+freq(data$race)
+
+freq(data$race_head)
+
+# owenership
+freq(data$ownershp)
+
+freq(data$ownershpd)
+
+# dissability
+freq(data$diffcare)
+
+freq(data$diffphys)
+
+freq(data$diffrem)
+
+freq(data$diffmob)
+
+freq(data$diffeye)
+
+freq(data$diffhear)
+
+# income
+summary(data$hhincome)
+summary(data$hhincome_cpiu_2010)
+
+
+#yeare
+print(data %>% count(year))
+print(data %>% count(multyear))
+```
+
+
+
+## V. Data Cleaning and Variable Setup
+
+### A. Create Identifiers and Key Variables
+
+Notes:
+
+-   SERIAL: is an identifying number unique to each household record in
+    a given sample. All person records are assigned the same serial
+    number as the household record that they follow.
+
+-   PERNUM numbers all persons within each household consecutively in
+    the order in which they appear on the original census or survey
+    form. When combined with SAMPLE and SERIAL, PERNUM uniquely
+    identifies each person within the IPUMS.
+
+-   HHWT is a 6-digit numeric variable which indicates how many
+    households in the U.S. population are represented by a given
+    household in an IPUMS sample and has two implied decimals. For
+    example, a HHWT value of 010461 should be interpreted as 104.61.
+    HHWT specific variable codes for missing, edited, or unidentified
+    observations, observations not applicable (N/A), observations not in
+    universe (NIU), top and bottom value coding, etc. are provided below
+    if applicable by Census year (and data sample if specified).
+    However, our HHWT values are showing as numeric values like 26,
+    34, 38. This ️likely means that the weights were imported already
+    scaled correctly (i.e., the implied decimals have already been
+    applied). So we will not weigh_person/household as recommended above
+    hhwt/100.
+
+-   Generate person identifier: household identifier + \# that
+    identifies the person within the household
+
+```{r}
+data_clean <- data %>%
+  mutate(
+    household_id = serial, # 
+    person_id = paste(serial, pernum, sep = "-"), 
+    income = hhincome_cpiu_2010,
+    housing_cost = owncost_cpiu_2010, 
+    weight_person = perwt,
+    weight_household = hhwt
+  )
+
+# remove original data(can read after, I just don't have memory)
+rm(data)
+```
+
+### B. Set Up Survey Designs
+
+-   The ACS data isn't collected randomly — it uses a complex design
+    where some types of households are more likely to be selected than
+    others, and households are grouped (clustered) by geography.
+
+-   If we ignore this, our results might look more precise than they
+    really are (i.e., too small standard errors).
+
+-   Using svydesign() helps R understand how the data was collected so
+    it can:
+
+    -   Properly apply the weights (so each household counts for the
+        right number of people),
+    -   Adjust for clustering (so confidence intervals and p-values are
+        more realistic).
+
+-   We want to use this design for:
+
+    -   Calculating means or proportions with standard errors
+    -   Plotting trends with confidence intervals
+    -   Running regressions or hypothesis tests
+
+-   CLUSTER: Household cluster for variance estimation
+
+**Household level survey design**
+```{r}
+hh_design <- svydesign(
+  id = ~cluster,
+  weights = ~weight_household,
+  data = data_clean
+)
+```
+
+**person level survey design**
+```{r}
+person_design <- svydesign(
+  id = ~cluster,
+  weights = ~perwt,
+  data = data_clean
+)
+```
+
+
+### C. Clean and Recode Variables
+
+- Age
+- Race & Ethnicity
+- Veteran Status
+- Disability
+- Tenure (Ownership)
+- Household Income Brackets
+- Housing Cost Burden
+- Household Size
+
+#### 1. Age
+
+Person
+```{r}
+# clean age 
+data_clean <- data_clean %>%
+  mutate(
+    age_group = cut(age, breaks = c(0, 17, 34, 54, 74, Inf), 
+                    labels = c("0-17", "18-34", "35-54", "55-74", "75+"))
+  )
+freq(data_clean$age_group)
+```
+
+House
+```{r}
+data_clean <- data_clean %>%
+  mutate(
+    age_head_group = cut(age, breaks = c(0, 17, 34, 54, 74, Inf), 
+                         labels = c("0-17", "18-34", "35-54", "55-74", "75+"))
+  )
+
+```
+
+#### 2. Race & ethnicity
+
+Notes: 
+
+- Recode Hispanic origin and race/ethnicity using numeric codes
+- HISPAN: 0 = Not Hispanic
+
+Person
+```{r}
+data_clean <- data_clean %>%
+  mutate(
+    race_group = case_when(
+      race == 1 ~ "White",
+      race == 2 ~ "Black",
+      race == 3 ~ "Native American",
+      race %in% 4:6 ~ "Asian/Pacific Islander",
+      race %in% 7:8 ~ "Multiracial",
+      race == 9 ~ "Other",
+      TRUE ~ "Unknown"
+    )
+  )
+
+
+data_clean <- data_clean %>%
+  mutate(
+    race_ethnicity = case_when(
+      hispan != 0 ~ "Hispanic",
+      hispan == 0 & race_group == "White" ~ "Non-Hispanic White",
+      hispan == 0 & race_group == "Black" ~ "Non-Hispanic Black",
+      hispan == 0 & race_group == "Asian/Pacific Islander" ~ "Non-Hispanic Asian/Pacific Islander",
+      hispan == 0 & race_group == "Native American" ~ "Non-Hispanic Native American",
+      hispan == 0 & race_group == "Multiracial" ~ "Non-Hispanic Multiracial",
+      hispan == 0 & race_group == "Other" ~ "Non-Hispanic Other",
+      TRUE ~ "Unknown"
+    )
+  )
+
+```
+
+Household
+```{r}
+data_clean <- data_clean %>%
+  mutate(
+    race_group_head = case_when(
+      race_head == 1 ~ "White",
+      race_head == 2 ~ "Black",
+      race_head == 3 ~ "Native American",
+      race_head %in% 4:6 ~ "Asian/Pacific Islander",
+      race_head %in% 7:8 ~ "Multiracial",
+      race_head == 9 ~ "Other",
+      TRUE ~ "Unknown"
+    ),
+    
+    race_ethnicity_head = case_when(
+      hispan_head != 0 ~ "Hispanic",  # 0 = Not Hispanic
+      hispan_head == 0 & race_group_head == "White" ~ "Non-Hispanic White",
+      hispan_head == 0 & race_group_head == "Black" ~ "Non-Hispanic Black",
+      hispan_head == 0 & race_group_head == "Asian/Pacific Islander" ~ "Non-Hispanic Asian/Pacific Islander",
+      hispan_head == 0 & race_group_head == "Native American" ~ "Non-Hispanic Native American",
+      hispan_head == 0 & race_group_head == "Multiracial" ~ "Non-Hispanic Multiracial",
+      hispan_head == 0 & race_group_head == "Other" ~ "Non-Hispanic Other",
+      TRUE ~ "Unknown"
+    )
+  )
+
+freq(data_clean$race_ethnicity_head)
+```
+
+#### 3.Veteran Status
+
+Person
+```{r}
+data_clean <- data_clean %>%
+  mutate(
+    veteran_person = case_when(
+      vetstatd == 2 ~ "Veteran",
+      vetstatd == 3 ~ "Active duty",
+      vetstatd == 4 ~ "Reserve/National Guard",
+      vetstatd == 1 ~ "Non-veteran",
+      vetstatd == 0 ~ NA_character_,  # NIU (not in universe)
+      TRUE ~ "Unknown"
+    )
+  )
+freq(data_clean$veteran_person)
+```
+
+Household
+```{r}
+data_clean <- data_clean %>%
+  mutate(
+    veteran_head = case_when(
+      vetstat_head == 1 ~ "Veteran",
+      vetstat_head == 2 ~ "Non-veteran",
+      vetstat_head == 0 ~ NA_character_,  # NIU (Not in Universe)
+      TRUE ~ "Unknown"
+    )
+  )
+
+freq(data_clean$veteran_head)
+```
+
+#### 4. Disability
+
+Person
+```{r}
+data_clean <- data_clean %>%
+  mutate(
+    # 1 = Yes (has difficulty), 2 = No, 0 = NIU
+    diffrem_flag = case_when(
+      diffrem == 1 ~ 1,
+      diffrem == 2 ~ 0,
+      diffrem == 0 ~ NA_real_,  # Not in universe
+      TRUE ~ NA_real_
+    ),
+    
+    diffphys_flag = case_when(
+      diffphys == 1 ~ 1,
+      diffphys == 2 ~ 0,
+      diffphys == 0 ~ NA_real_,
+      TRUE ~ NA_real_
+    ),
+    
+    diffmob_flag = case_when(
+      diffmob == 1 ~ 1,
+      diffmob == 2 ~ 0,
+      diffmob == 0 ~ NA_real_,
+      TRUE ~ NA_real_
+    ),
+    
+    diffcare_flag = case_when(
+      diffcare == 1 ~ 1,
+      diffcare == 2 ~ 0,
+      diffcare == 0 ~ NA_real_,
+      TRUE ~ NA_real_
+    ),
+    
+    diffsens_flag = case_when(
+      diffsens == 1 ~ 1,
+      diffsens == 2 ~ 0,
+      diffsens == 0 ~ NA_real_,
+      TRUE ~ NA_real_
+    )
+  )
+
+data_clean <- data_clean %>%
+  mutate(
+    disability_person = case_when(
+      rowSums(select(., diffrem_flag, diffphys_flag, diffmob_flag, diffcare_flag, diffsens_flag), na.rm = TRUE) >= 1 ~ "Yes",
+      rowSums(select(., diffrem_flag, diffphys_flag, diffmob_flag, diffcare_flag, diffsens_flag), na.rm = TRUE) == 0 ~ "No",
+      TRUE ~ NA_character_
+    )
+  )
+
+freq(data_clean$disability_person)
+```
+
+Household
+```{r}
+# Disability flags for household head using numeric values
+data_clean <- data_clean %>%
+  mutate(
+    diffrem_head_flag = case_when(
+      diffrem_head == 1 ~ 1,
+      diffrem_head == 2 ~ 0,
+      diffrem_head == 0 ~ NA_real_,
+      TRUE ~ NA_real_
+    ),
+    diffphys_head_flag = case_when(
+      diffphys_head == 1 ~ 1,
+      diffphys_head == 2 ~ 0,
+      diffphys_head == 0 ~ NA_real_,
+      TRUE ~ NA_real_
+    ),
+    diffmob_head_flag = case_when(
+      diffmob_head == 1 ~ 1,
+      diffmob_head == 2 ~ 0,
+      diffmob_head == 0 ~ NA_real_,
+      TRUE ~ NA_real_
+    ),
+    diffcare_head_flag = case_when(
+      diffcare_head == 1 ~ 1,
+      diffcare_head == 2 ~ 0,
+      diffcare_head == 0 ~ NA_real_,
+      TRUE ~ NA_real_
+    ),
+    diffsens_head_flag = case_when(
+      diffsens_head == 1 ~ 1,
+      diffsens_head == 2 ~ 0,
+      diffsens_head == 0 ~ NA_real_,
+      TRUE ~ NA_real_
+    )
+  )
+
+data_clean <- data_clean %>%
+  mutate(
+    disability_head = case_when(
+      rowSums(select(., diffrem_head_flag, diffphys_head_flag, diffmob_head_flag, diffcare_head_flag, diffsens_head_flag), na.rm = TRUE) >= 1 ~ "Yes",
+      rowSums(select(., diffrem_head_flag, diffphys_head_flag, diffmob_head_flag, diffcare_head_flag, diffsens_head_flag), na.rm = TRUE) == 0 ~ "No",
+      TRUE ~ NA_character_
+    )
+  )
+
+
+freq(data_clean$disability_head)
+```
+
+#### 5. HH Ownership
+
+Notes:
+
+- OWNERSHP: indicates whether the housing unit was rented or owned by its inhabitants. Housing units acquired with a mortgage or other lending arrangement(s) are classified as "owned," even if repayment was not yet completed.
+
+Detailed
+```{r}
+data_clean <- data_clean %>%
+  mutate(
+    tenure_detailed = case_when(
+      ownershpd == 12 ~ "Owned - Free and Clear",
+      ownershpd == 13 ~ "Owned - With Mortgage",
+      ownershpd == 22 ~ "Rented - Cash Rent",
+      ownershpd == 21 ~ "Rented - No Cash Rent",
+      TRUE ~ "Other/Unknown"
+    )
+  )
+
+count(data_clean, tenure_detailed)
+```
+
+General
+```{r}
+data_clean <- data_clean %>%
+  mutate(
+    tenure_general = case_when(
+      str_detect(tenure_detailed, "Owned") ~ "Owned",
+      str_detect(tenure_detailed, "Rented") ~ "Rented",
+      TRUE ~ "Other/Unknown"
+    )
+  )
+
+count(data_clean, tenure_general)
+
+```
+
+#### 6. Household income
+
+```{r}
+# create income brackets 
+data_clean <- data_clean %>%
+  mutate(
+    income_bracket = case_when(
+    income < 25000 ~ "< $25k",
+    income >= 25000 & income < 50000 ~ "$25k - $49k",
+    income >= 50000 & income < 75000 ~ "$50k - $74k",
+    income >= 75000 & income < 100000 ~ "$75k - $99k",
+    income >= 100000 ~ "$100k+",
+    TRUE ~ "Unknown"
+   )
+  )
+freq(data_clean$income_bracket)
+```
+
+#### 7. Housing burden
+
+Notes:
+
+-   Create a housing cost burden ratio: housing_cost_burden
+    =monthly_housing_cost/ annual_household_income
+-   If income is 0 or missing, it assigns NA to avoid divding by 0.
+-   Selected monthly owner costs [standardized using CPIU_2010]
+
+```{r}
+data_clean <- data_clean %>%
+  mutate(
+    income = as.numeric(hhincome_cpiu_2010),
+    housing_cost = as.numeric(owncost_cpiu_2010),
+    housing_cost_burden = ifelse(income > 0, housing_cost / income, NA),
+    cost_burden_category = case_when(
+      is.na(housing_cost_burden) ~ "Missing",
+      housing_cost_burden < 0.3 ~ "Affordable (<30%)",
+      housing_cost_burden < 0.5 ~ "Moderate (30-50%)",
+      housing_cost_burden >= 0.5 ~ "Severe (>50%)",
+      TRUE ~ "Unknown"
+    )
+  )
+
+freq(data_clean$cost_burden_category)
+```
+
+#### 8. Household size
+```{r}
+data_clean <- data_clean %>%
+  mutate(
+    household_size_group = case_when(
+      numprec == 1 ~ "1 person",
+      numprec == 2 ~ "2 people",
+      numprec >= 3 & numprec <= 4 ~ "3-4 people",
+      numprec >= 5 ~ "5+ people",
+      TRUE ~ "Unknown"
+  )
+  )
+freq(data_clean$household_size_group)
+```
+
+## VI. Export Cleaned Files
+```{r}
+# use readr - faster than write.csv
+saveRDS(data_clean, "full_clean.rds")
+```
+
+## VII. Create Household-Level Subset
+
+Notes:
+
+- Aggregate household-level data
+- Keep only household heads
+- # as recommended by IPUMS: users should also be sure to select one person (e.g., PERNUM = 1) to represent the entire household.
+- q* variables are data quality flags that indicate whether a value was allocated (imputed) by the Census Bureau
+```{r}
+households <- data_clean %>%
+  filter(pernum == 1) %>%  
+  select(
+    household_id = serial,
+    pernum,
+    weight_household = hhwt,
+    year, 
+    multyear,
+    race_ethnicity_head,
+    veteran_head,
+    disability_head,
+    sex_head,
+    age_head,
+    age_head_group,
+    income = hhincome_cpiu_2010,
+    income_bracket,
+    housing_cost = owncost_cpiu_2010,
+    housing_cost_burden,
+    cost_burden_category,
+    tenure_detailed,
+    tenure_general,
+    met_area = met2013, 
+    puma, 
+    cluster,
+    strata,
+    gq,
+    qhhincome, 
+    qowncost, 
+    qownersh,
+  )%>% 
+  mutate(
+    any_imputed = qownersh == 1 | qhhincome == 1 | qowncost == 1 
+  )
+
+saveRDS(households, "household_clean.rds")
+
+summary(households)
+```
+
+### A. HH level Checks
+
+```{r}
+households %>% count(race_ethnicity_head, tenure_detailed, wt = weight_household)
+households %>% count(veteran_head, cost_burden_category, wt = weight_household)
+
+```

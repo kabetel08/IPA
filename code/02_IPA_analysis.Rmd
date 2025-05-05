@@ -1440,10 +1440,10 @@ data_ownership <- data_clean %>%
 
 # Fix group_by in weighted summary
 data_ownership_weighted <- data_clean %>%
-  filter(!is.na(owner), !is.na(weight_household), !is.na(age_head_group), age_head > 17) %>%
+  filter(!is.na(owner), !is.na(weight_household_norm), !is.na(age_head_group), age_head > 17) %>%
   group_by(multyear, age_head_group) %>%  # <- USE age_head_group
   summarise(
-    ownership_rate = sum(owner * weight_household) / sum(weight_household),
+    ownership_rate = sum(owner * weight_household_norm) / sum(weight_household_norm),
     count = n(),
     .groups = "drop"
   )
@@ -1507,15 +1507,15 @@ data_clean %>%
   summarise(
     total_rows = n(),
     missing_age = sum(is.na(age_head)),
-    missing_weight = sum(is.na(weight_household)),
-    nonmissing_both = sum(!is.na(age_head) & !is.na(weight_household))
+    missing_weight = sum(is.na(weight_household_norm)),
+    nonmissing_both = sum(!is.na(age_head) & !is.na(weight_household_norm))
   )
 
 renter_summary <- data_clean %>%
-  filter(tenure_general == "Renter", !is.na(age_head), !is.na(weight_household)) %>%
+  filter(tenure_general == "Renter", !is.na(age_head), !is.na(weight_household_norm)) %>%
   group_by(multyear) %>%
   summarise(
-    avg_age = sum(age_head * weight_household) / sum(weight_household),
+    avg_age = sum(age_head * weight_household_norm) / sum(weight_household_norm),
     count = n(),
     .groups = "drop"
   )
@@ -1531,10 +1531,10 @@ data_clean <- data_clean %>%
 
 # Summarize with weighted average
 data_age_summary_weighted <- data_clean %>%
-  filter(!is.na(age_head), !is.na(weight_household), !is.na(tenure_general)) %>%
+  filter(!is.na(age_head), !is.na(weight_household_norm), !is.na(tenure_general)) %>%
   group_by(multyear, tenure_general) %>%
   summarise(
-    avg_age = sum(age_head * weight_household) / sum(weight_household),
+    avg_age = sum(age_head * weight_household_norm) / sum(weight_household_norm),
     count = n(),
     .groups = "drop"
   )
@@ -1570,11 +1570,11 @@ data_summary_race_weighted <- data %>%
   filter(multyear >= 2014 & multyear <= 2023,
          !is.na(tenure_general),
          !is.na(race_ethnicity_head),
-         !is.na(weight_household)) %>%
+         !is.na(weight_household_norm)) %>%
   mutate(owner = if_else(tenure_general == "Owned", 1, 0)) %>%
   group_by(multyear, race_ethnicity_head) %>%
   summarise(
-    ownership_rate = sum(owner * weight_household) / sum(weight_household),
+    ownership_rate = sum(owner * weight_household_norm) / sum(weight_household_norm),
     count = n(),
     .groups = "drop"
   )

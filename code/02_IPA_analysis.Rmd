@@ -1,0 +1,1650 @@
+---
+title: "02. IPA Analysis"
+author: ""
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+  pdf_document:
+    latex_engine: xelatex
+    keep_tex: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## I. Set Up 
+
+### A. Load Libraries
+
+```{r warning =FALSE, message =FALSE}
+library(data.table)
+library(DataExplorer)
+library(fastLink)
+library(furniture)
+library(ggrepel)
+library(ggthemes)
+library(haven)
+library(here)
+library(Hmisc)
+library(infer)
+library(ipumsr)
+library(kableExtra)
+library(knitr)
+library(latex2exp)
+library(lubridate)
+library(matrixStats)
+library(modeest)
+library(pastecs)
+library(psych)
+library(purrr)
+library(readxl)
+library(scales)
+library(stargazer)
+library(stringr)
+library(survey)
+library(tibble)
+library(tidyverse)
+library(writexl)
+library(srvyr)
+
+```
+
+### B. Clear Memory
+```{r}
+rm(list = ls(all.names = TRUE))
+gc()
+```
+
+### C. Custom Functions
+
+```{r}
+#some self-created functions that I frequently use
+freq <- function(x) {
+frequency <- table(x, useNA = "ifany")
+proportion <- round(prop.table(table(x, useNA = "ifany"),),3)
+cbind(frequency, proportion)
+}
+
+freq_sort <- function(x) {
+frequency <- table(x, useNA = "ifany")
+proportion <- round(prop.table(table(x, useNA = "ifany"),),3)
+out <- cbind(frequency, proportion)
+out[order(out[,1],decreasing=TRUE),]
+}
+
+freq2 = function(x,y){
+table(x,y, useNA = "ifany")
+}
+
+freq2_col <-function(x,y){
+prop.table(table(x,y,useNA = "ifany"),2)
+}
+
+freq2_row <-function(x,y){
+prop.table(table(x,y,useNA = "ifany"),1)
+}
+
+  ttable <- function(dependent, by_variable){
+  level <- c("By variable=0", "By variable=1", "Difference")
+  means <- round(c(mean(dependent[by_variable==0], na.rm=TRUE),
+  mean(dependent[by_variable==1], na.rm=TRUE),
+  mean(dependent[by_variable==1], na.rm=TRUE) -
+  mean(dependent[by_variable==0], na.rm=TRUE)),3)
+  se_0 <- sd(dependent[by_variable==0],
+  na.rm=TRUE)/sqrt(sum(!is.na(dependent[by_variable==0])))
+  se_1 <- sd(dependent[by_variable==1],
+  na.rm=TRUE)/sqrt(sum(!is.na(dependent[by_variable==1])))
+  se_diff <-sqrt(se_0^2+ se_1^2)
+  se <- round(c(se_0, se_1, se_diff),3)
+  data_correction <- c(1,1,2)
+  N <- c(sum(!is.na(dependent[by_variable==0])) ,
+  sum(!is.na(dependent[by_variable==01])), sum(!is.na(dependent)))
+  results <- as.data.frame(cbind(level, means, se, N, data_correction))
+  results$means <-as.numeric(results$means)
+  results$se <-as.numeric(results$se)
+  results$N <-as.numeric(results$N)
+  results$data_correction <-as.numeric(results$data_correction)
+  ttable <- results %>%
+  mutate(t_stat = round(means/se,3),
+  data_t = N - data_correction,
+  p_value = 2*pt(abs(t_stat), data=data_t, lower.tail=FALSE)
+  ) %>%
+  select(level, means, se, t_stat, data_t, p_value )
+  rm(level, means, se_0, se_1, se_diff, se, data_correction, N, results)
+  ttable
+}
+
+```
+
+## II. Data Loading
+
+### A. Load IPUMS data 
+```{r}
+data <- readRDS("../data/clean/01_IPA_cleaning_household_clean.rds")
+
+
+print(object.size(data), units = "GB")
+```
+
+
+```{r}
+plot_missing(data)
+```
+
+
+### C.Create survey design objects 
+
+About the survey: 
+- To make accurate inferences about the full California population, we must apply survey weights and account for the sampling design. 
+- This includes adjusting for clustering (primary sampling units) and stratification,  which ensures that standard errors and confidence intervals are correctly estimated.
+- Because this is not a simple random sample, failing to account for design effects would lead to biased estimates and misleading precision.
+- svy_households <- svydesign(ids = ~cluster,strata = ~strata,weights = ~weight_household,data = data, nest = TRUE): 
+  - id = cluster:	Accounts for clustering in the sample design (e.g., multiple people from same tract)
+  - strata = ~strata: Ensures stratified sampling is accounted for (e.g., sampling by region or income bin)
+  - weights = ~weight_household	:Makes the estimates representative of the full population
+
+
+```{r}
+# Join AMI + define key variables for survey analysis
+data <- data %>%
+  mutate(
+    # Ensure types
+    income = as.numeric(income),
+    weight_household_norm = as.numeric(weight_household_norm),
+    multyear = as.integer(multyear),
+
+    # Demographic dummies
+    white_head = race_ethnicity_head == "White",
+    black_head = race_ethnicity_head == "Black",
+    latinx_head = str_detect(race_ethnicity_head, "Hispanic"),
+    elderly_head = age_head_group %in% c("65-74", "75+"),
+
+    # Income categories (HCD-style)
+    income_category = case_when(
+      percent_ami < 0.30 ~ "Extremely Low Income",
+      percent_ami < 0.50 ~ "Very Low Income",
+      percent_ami < 0.80 ~ "Low Income",
+      percent_ami < 1.20 ~ "Moderate Income",
+      percent_ami >= 1.20 ~ "Above Moderate Income",
+      TRUE ~ NA_character_
+    ),
+    income_category = factor(
+      income_category,
+      levels = c(
+        "Extremely Low Income", "Very Low Income", "Low Income",
+        "Moderate Income", "Above Moderate Income"
+      )
+    ),
+    low_income = income_category %in% c(
+      "Extremely Low Income", "Very Low Income", "Low Income"
+    ),
+    moderate_income = income_category == "Moderate Income",
+
+    # Likely eligible for first-time homebuyer (FTB) assistance program
+    likely_ftb_eligible = case_when(
+      is_renter == 1 & income <= 1.2 * ami ~ 1,
+      TRUE ~ 0
+    )
+  )
+
+# Estimate averages using survey design
+# - This creates a survey design object using the {survey} package. It tells R how to account for:
+#     - Clusters (e.g., PSU)
+#     - Strata (e.g., sampling strata)
+#     - Weights (e.g., normalized household weights)
+
+# This object (svy_households) is the foundational structure that contains both data and the metadata needed for valid variance estimation, confidence intervals, and standard errors using Taylor series linearization.
+svy_households <- svydesign(
+  ids = ~cluster,
+  strata = ~strata,
+  weights = ~weight_household_norm,
+  data = data,
+  #nest = TRUE
+)
+
+# This converts the design object to a tbl_svy object using the {srvyr} package. It lets you work more naturally with tidyverse workflows
+srvy <- as_survey(svy_households)
+
+```
+
+
+```{r tenure}
+# A. Tenure
+# year 
+tenure_by_year_tenure_svy <- srvy %>%
+  group_by(multyear) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(owner_mean, renter_mean),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+# Veteran (REVISE)
+tenure_veteran_svy <- srvy %>%
+  group_by(veteran_head) %>%
+  summarize(share = survey_mean(is_owner, vartype = c("se", "ci")))
+
+# Disability  
+tenure_disability_svy <- srvy %>%
+  group_by(disability_head) %>%
+  summarize(across(
+    c(is_owner, is_renter),
+    ~ survey_mean(.x, vartype = "se", na.rm = TRUE),
+    .names = "{.col}"
+  )) %>%
+  pivot_longer(
+    cols = starts_with("is_"),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "is_owner" ~ "Owner",
+      tenure_detailed == "is_renter" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+# gender only
+tenure_gender_svy <- srvy %>%
+  group_by(female_head) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(owner_mean, renter_mean),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+# gender and year
+tenure_by_gender_year_svy <- srvy %>%
+  group_by(multyear, female_head) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(owner_mean, renter_mean),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+
+
+# age head 
+tenure_by_age_svy <- srvy %>%
+  group_by(age_head_group) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(owner_mean, renter_mean),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+# age head and year 
+tenure_by_age_year_svy <- srvy %>%
+  group_by(multyear, age_head_group) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(owner_mean, renter_mean),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+# age, year, female 
+tenure_by_age_year_svy <- srvy %>%
+  group_by(multyear, age_head_group, female_head) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(owner_mean, renter_mean),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+
+#race 
+tenure_by_race_svy <- srvy %>%
+  group_by(race_ethnicity_head) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(owner_mean, renter_mean),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+# race + year 
+tenure_by_race_svy <- srvy %>%
+  group_by( multyear,race_ethnicity_head) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(owner_mean, renter_mean),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+# race + year + female 
+tenure_by_race_svy <- srvy %>%
+  group_by( multyear,race_ethnicity_head, female_head) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(owner_mean, renter_mean),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+# income 
+ownership_by_income_svy <- srvy %>%
+  group_by(income_bracket) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(owner_mean, renter_mean),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+# Tenure by Inccome + year 
+tenure_by_income_year_svy <- srvy %>%
+  filter(!is.na(income_bracket)) %>%
+  group_by(multyear, income_bracket) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = c(owner_mean, renter_mean),
+               names_to = "tenure_detailed",
+               values_to = "share") %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter"
+    )
+  )
+
+# Tenure by Ami + year 
+tenure_by_ami_year_svy <- srvy %>%
+  filter(!is.na(ami_category)) %>%
+  group_by(multyear, ami_category) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = c(owner_mean, renter_mean),
+               names_to = "tenure_detailed",
+               values_to = "share") %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter"
+    )
+  )
+
+
+# ami 
+ownership_by_ami_svy <- srvy %>%
+  group_by(ami_category) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(owner_mean, renter_mean),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+# cost burden
+ownership_by_cost_burden_svy <- srvy %>%
+  group_by(cost_burden_category) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = c(owner_mean, renter_mean),
+    names_to = "tenure_detailed",
+    values_to = "share"
+  ) %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter",
+      TRUE ~ tenure_detailed
+    )
+  )
+
+#  tenure by cost burden + year 
+tenure_by_cost_burden_year_svy <- srvy %>%
+  filter(!is.na(cost_burden_category)) %>%
+  group_by(multyear, cost_burden_category) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = c(owner_mean, renter_mean),
+               names_to = "tenure_detailed",
+               values_to = "share") %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter"
+    )
+  )
+
+# tenure , income, race
+# disparities in ownership rates across income levels and racial groups
+tenure_by_income_race_svy <- srvy %>%
+  filter(!is.na(income_bracket), !is.na(race_ethnicity_head)) %>%
+  group_by(income_bracket, race_ethnicity_head) %>%
+  summarize(
+    owner_mean = survey_mean(is_owner, vartype = "se", na.rm = TRUE),
+    renter_mean = survey_mean(is_renter, vartype = "se", na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = c(owner_mean, renter_mean),
+               names_to = "tenure_detailed",
+               values_to = "share") %>%
+  mutate(
+    tenure_detailed = case_when(
+      tenure_detailed == "owner_mean" ~ "Owner",
+      tenure_detailed == "renter_mean" ~ "Renter"
+    )
+  )
+```
+
+```{r}
+# Cost Burden
+# Cost Buurden by income bracket
+cost_burden_by_income_svy <- srvy %>%
+  filter(!is.na(cost_burden_category), !is.na(income_bracket)) %>%
+  group_by(income_bracket, cost_burden_category) %>%
+  summarize(share = survey_mean(overburdened, vartype = "se", na.rm = TRUE))
+
+# Cost Burden by Tenure 
+cost_burden_by_tenure_svy <- srvy %>%
+  filter(!is.na(cost_burden_category)) %>%
+  group_by(tenure_general, cost_burden_category) %>%
+  summarize(share = survey_mean(overburdened, vartype = "se", na.rm = TRUE))
+
+# Cost burden, income , race 
+# --> This shows whether households with the same income still experience different cost burdens by race, which can reflect structural inequalities like discrimination, neighborhood sorting, or wealth gaps.
+cost_burden_by_income_race_svy <- srvy %>%
+  filter(!is.na(cost_burden_category), !is.na(income_bracket), !is.na(race_ethnicity_head)) %>%
+  group_by(income_bracket, race_ethnicity_head, cost_burden_category) %>%
+  summarize(share = survey_mean(overburdened, vartype = "se", na.rm = TRUE))
+
+# cost burden  ami, race/ethnicity
+# --> affordability context to racial disparities in cost burden.
+cost_burden_by_ami_race_svy <- srvy %>%
+  filter(!is.na(cost_burden_category), !is.na(ami_category), !is.na(race_ethnicity_head)) %>%
+  group_by(ami_category, race_ethnicity_head, cost_burden_category) %>%
+  summarize(share = survey_mean(overburdened, vartype = "se", na.rm = TRUE))
+
+```
+
+```{r}
+# Mortgage
+# Mortgage Burden by AMI
+mortgage_burden_by_ami_svy <- srvy %>%
+  filter(!is.na(mortgage_burden), !is.na(ami_category)) %>%
+  group_by(ami_category) %>%
+  summarize( avg_burden = survey_mean(mortgage_burden, vartype = "se", na.rm = TRUE))
+    
+# mortgage burden, ami, gender 
+mortgage_burden_by_ami_gender_svy <- srvy %>%
+  filter(!is.na(mortgage_burden), !is.na(ami_category)) %>%
+  group_by(ami_category, female_head) %>%
+  summarize(avg_burden = survey_mean(mortgage_burden, vartype = "se", na.rm = TRUE))
+
+    
+  # Tenure by mortgage burden 
+tenure_by_mortgage_burden_svy <- srvy %>%
+  filter(is_owner == 1, !is.na(mortgage_burden)) %>%
+  mutate(
+    mortgage_burden_category = case_when(
+      mortgage_burden < 0.3 ~ "<30%",
+      mortgage_burden < 0.5 ~ "30–49%",
+      mortgage_burden >= 0.5 ~ "50%+",
+      TRUE ~ NA_character_)) %>%
+  group_by(mortgage_burden_category) %>%
+  summarize(share = survey_mean(is_owner, vartype = "se", na.rm = TRUE))
+```
+
+#### TO BE UPDATED
+Save precomputed survey summaries
+Note: We are not going to reevaluate them after this original run since they take a long time, so we are saving them and then reload them later when we need it 
+```{r save_survey_outputs, message=FALSE, eval=False}
+# ---------------------------
+# A. Tenure trends over time
+# ---------------------------
+saveRDS(ownership_year_svy, "../data/clean/svys/ownership_year_svy.rds")
+saveRDS(rent_year_svy,"../data/clean/svys/rent_year_svy.rds")
+saveRDS(ownership_by_year_tenure_svy,"../data/clean/svys/ownership_by_year_tenure_svy.rds")
+
+# ---------------------------
+# B. Tenure by demographics
+# ---------------------------
+saveRDS(tenure_veteran_svy,"../data/clean/svys/tenure_veteran_svy.rds")
+saveRDS(tenure_disability_svy,"../data/clean/svys/tenure_disability_svy.rds")
+saveRDS(tenure_age_svy,"../data/clean/svys/tenure_age_svy.rds")
+saveRDS(ownership_gender_svy,"../data/clean/svys/ownership_gender_svy.rds")
+saveRDS(ownership_by_race_svy,"../data/clean/svys/ownership_by_race_svy.rds")
+
+
+
+# ---------------------------
+# C. Tenure by race/ethnicity
+# ---------------------------
+saveRDS(ownership_race_svy,"../data/clean/svys/ownership_race_svy.rds")
+
+# ---------------------------
+# D. Tenure by income & affordability
+# ---------------------------
+saveRDS(ownership_income_svy,"../data/clean/svys/ownership_income_svy.rds")
+saveRDS(ownership_ami_svy,"../data/clean/svys/ownership_ami_svy.rds")
+
+# ---------------------------
+# E. Cost burden
+# ---------------------------
+saveRDS(burden_race_svy,"../data/clean/svys/burden_race_svy.rds")
+saveRDS(severe_burden_race_svy,"../data/clean/svys/severe_burden_race_svy.rds")
+
+# ---------------------------
+# F. Geography
+# ---------------------------
+saveRDS(ownership_puma_svy,"../data/clean/svys/ownership_puma_svy.rds")
+
+# ---------------------------
+# G. Analysis flags
+# ---------------------------
+saveRDS(farmworker_homeownership_svy,"../data/clean/svys/farmworker_homeownership_svy.rds")
+saveRDS(ftb_eligibility_svy,"../data/clean/svys/ftb_eligibility_svy.rds")
+
+```
+
+```{r, eval =False}
+# ---------------------------
+# A. Tenure trends over time
+# ---------------------------
+ownership_year_svy <- readRDS("../data/clean/svys/ownership_year_svy.rds")
+rent_year_svy <- readRDS("../data/clean/svys/rent_year_svy.rds")
+ownership_by_year_tenure_svy <- readRDS("../data/clean/svys/ownership_by_year_tenure_svy.rds")
+
+# ---------------------------
+# B. Tenure by demographics
+# ---------------------------
+tenure_veteran_svy <- readRDS("../data/clean/svys/tenure_veteran_svy.rds")
+tenure_disability_svy <- readRDS("../data/clean/svys/tenure_disability_svy.rds")
+tenure_age_svy <- readRDS("../data/clean/svys/tenure_age_svy.rds")
+ownership_gender_svy <- readRDS("../data/clean/svys/ownership_gender_svy.rds")
+
+# ---------------------------
+# C. Tenure by race/ethnicity
+# ---------------------------
+ownership_race_svy <- readRDS("../data/clean/svys/ownership_race_svy.rds")
+
+# ---------------------------
+# D. Tenure by income & affordability
+# ---------------------------
+ownership_income_svy <- readRDS("../data/clean/svys/ownership_income_svy.rds")
+ownership_ami_svy <- readRDS("../data/clean/svys/ownership_ami_svy.rds")
+
+# ---------------------------
+# E. Cost burden
+# ---------------------------
+burden_race_svy <- readRDS("../data/clean/svys/burden_race_svy.rds")
+severe_burden_race_svy <- readRDS("../data/clean/svys/severe_burden_race_svy.rds")
+
+# ---------------------------
+# F. Geography
+# ---------------------------
+ownership_puma_svy <- readRDS("../data/clean/svys/ownership_puma_svy.rds")
+
+# ---------------------------
+# G. Analysis flags
+# ---------------------------
+farmworker_homeownership_svy <- readRDS("../data/clean/svys/farmworker_homeownership_svy.rds")
+ftb_eligibility_svy <- readRDS("../data/clean/svys/ftb_eligibility_svy.rds")
+```
+
+## III. Homeownership Trends (2018–2024)
+
+### A. Ownership Rate by Year and Tenure 
+```{r ownership_year_new}
+
+ggplot(tenure_by_year_tenure_svy, aes(x = factor(multyear), y = share, fill = tenure_detailed)) +
+  geom_col(position = "fill", width = 0.7) +  # Use "fill" for stacked percentages
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Homeownership and Rentership Rates in California (2014–2023)",
+    subtitle = "Based on survey-weighted estimates, by household tenure",
+    x = "Year",
+    y = "Share of Households",
+    fill = "Tenure"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    plot.title = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  )
+
+
+```
+
+### B. Homeownership over time with confidence intervals (Revise)
+```{r ownership_year_new}
+tenure_by_year_tenure_svy %>%
+  filter(tenure_detailed == "Owner") %>%
+  ggplot(aes(x = factor(multyear), y = share)) +
+  geom_col(fill = "steelblue", width = 0.7) +
+  geom_errorbar(aes(
+    ymin = share - owner_mean_se,
+    ymax = share + owner_mean_se
+  ), width = 0.2) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0, 1)) +
+  labs(
+    title = "Survey-Weighted Homeownership Rates Over Time (with SE)",
+    x = "Year", y = "Homeownership Rate"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+
+```
+
+
+
+## IV. Demographic Disparities
+### A. By Race/Ethnicity (KP.REVIST)
+```{r race_ethnicity_w}
+tenure_by_race_svy %>%
+  filter(tenure_detailed == "Owner") %>%
+  ggplot(aes(x = reorder(race_ethnicity_head, share), y = share, fill = race_ethnicity_head)) +
+  geom_col(show.legend = FALSE, width = 0.7) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0, 1)) +
+  labs(
+    title = "Survey-Weighted Homeownership by Race/Ethnicity",
+    x = "Race/Ethnicity of Household Head",
+    y = "Homeownership Rate"
+  ) +
+  coord_flip() +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold")
+  )
+
+
+
+```
+
+### B. By Income Category
+```{r income_group_w}
+tenure_by_income_year_svy %>%
+  filter(tenure_detailed == "Owner") %>%
+  ggplot(aes(x = multyear, y = share, color = income_bracket)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0, 1)) +
+  labs(
+    title = "Trends in Homeownership by Income Bracket (2014–2023)",
+    x = "Year", y = "Homeownership Rate",
+    color = "Income Bracket"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "right"
+  )
+
+```
+
+### C.
+```{r }
+tenure_by_income_year_svy %>%
+  filter(tenure_detailed == "Owner") %>%
+  ggplot(aes(x = factor(multyear), y = share)) +
+  geom_col(fill = "steelblue", width = 0.7) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  facet_wrap(~income_bracket) +
+  labs(
+    title = "Homeownership Rates by Income Bracket and Year",
+    x = "Year", y = "Homeownership Rate"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(face = "bold")
+  )
+
+
+```
+
+```{r}
+tenure_by_income_year_svy %>%
+  filter(tenure_detailed == "Owner") %>%
+  ggplot(aes(x = income_bracket, y = share, fill = income_bracket)) +
+  geom_col(show.legend = FALSE) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  facet_wrap(~multyear, ncol = 5) +
+  labs(
+    title = "Homeownership by Income Bracket Across Years",
+    x = "Income Bracket", y = "Homeownership Rate"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(face = "bold")
+  )
+
+```
+### D.  Disability Status
+```{r Disability}
+# Filter to drop SE rows and reshape the SEs into a column
+ownership_disability_clean <- tenure_disability_svy %>%
+  filter(!str_detect(tenure_detailed, "_se")) %>%
+  left_join(
+   tenure_disability_svy%>%
+      filter(str_detect(tenure_detailed, "_se")) %>%
+      mutate(tenure_detailed = str_remove(tenure_detailed, "_se")) %>%
+      rename(share_se = share),
+    by = c("disability_head", "tenure_detailed")
+  )
+
+ggplot(ownership_disability_clean, aes(x = tenure_detailed, y = share, fill = disability_head)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  geom_errorbar(aes(ymin = share - share_se, ymax = share + share_se),
+                position = position_dodge(width = 0.8), width = 0.2) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  labs(
+    title = "Survey-Weighted Tenure by Disability Status",
+    x = "Tenure Type", y = "Share of Households", fill = "Disability (Head)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top")
+```
+
+### E. By Age Group
+
+```{r by-age}
+ggplot(tenure_by_age_svy, aes(x = tenure_detailed, y = share, fill = age_head_group)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Survey-Weighted Tenure by Age Group of Household Head",
+    x = "Tenure Type", y = "Share", fill = "Age Group"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top")
+```
+
+## V. Barriers to Homeownership
+
+### A. Housing Cost Burden (Weighted)
+`
+
+
+## VI. First-Time Homebuyers and Programs
+
+To understand how well state homebuyer assistance programs align with the needs of Californians, we assess the potential reach of several major programs, including:
+
+- CalHFA First-Time Homebuyer Assistance (down payment/closing cost support),
+- Forgivable Equity Builder Loan (for low-income first-time buyers), and
+- Mortgage Credit Certificate (MCC) (tax credit for qualified buyers).
+
+While administrative data on program recipients is limited and IPUMS microdata does not directly track homebuying history, we use proxy indicators to identify likely eligible households. In particular, we define a potential first-time buyer as:
+
+- A renter,
+- Between 25 and 44 years old, and
+- Living in a low- to moderate-income household (under 120% of Area Median Income).
+
+Our goal is to estimate how many households in California could qualify for these programs under current eligibility rules. We also disaggregate these estimates by race/ethnicity, income level, and region to evaluate who might be left out. 
+
+### A.Define Eligibility Flags
+```{r eligibility-flags}
+data <- data %>%
+  mutate(
+    likely_ftb_eligible = ifelse(
+      tenure_detailed == "Rented" &
+      age_head >= 25 & age_head <= 44 &
+      percent_ami <= 1.2,
+      1, 0
+    ),
+    myhome_eligible = ifelse(likely_ftb_eligible == 1 & percent_ami <= 1.2, 1, 0),
+    feb_eligible = ifelse(likely_ftb_eligible == 1 & percent_ami <= 0.8, 1, 0)
+  )
+
+if("OCC" %in% names(data)) {
+  data <- data %>%
+    mutate(
+      farmworker_flag = ifelse(OCC %in% c(6010, 6050), 1, 0),
+      joe_serna_eligible = ifelse(likely_ftb_eligible == 1 & farmworker_flag == 1, 1, 0)
+    )
+}
+```
+
+### B. Summary Table by Program and Subgroup
+```{r table-by-subgroup}
+# By income category
+ftb_income <- svyby(~likely_ftb_eligible + myhome_eligible + feb_eligible,
+                    ~income_category,
+                    svy_households, svymean) %>%
+  janitor::clean_names()
+
+# By race/ethnicity
+ftb_race <- svyby(~likely_ftb_eligible + myhome_eligible + feb_eligible,
+                  ~race_ethnicity_head,
+                  svy_households, svymean) %>%
+  janitor::clean_names()
+
+# Display tables
+kable(ftb_income, digits = 3)
+kable(ftb_race, digits = 3)
+```
+
+### C. Plots of Eligibility
+```{r plot-ftb-by-income}
+ggplot(ftb_income, aes(x = income_category, y = likely_ftb_eligible)) +
+  geom_col(fill = "steelblue") +
+  labs(title = "Likely First-Time Buyer Eligibility by Income Group",
+       x = "Income Category", y = "Share Eligible") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme_minimal()
+```
+
+```{r plot-feb-by-race}
+ggplot(ftb_race, aes(x = race_ethnicity_head, y = feb_eligible, fill = race_ethnicity_head)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "Forgivable Equity Builder Loan Eligibility by Race/Ethnicity",
+       x = "Race/Ethnicity", y = "Share Eligible") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme_minimal()
+```
+
+### D. Mapping Prep
+```{r mapping-prep, eval=FALSE}
+ftb_by_puma <- data %>%
+  group_by(puma) %>%
+  summarise(potential_ftbs = sum(weight_household * likely_ftb_eligible, na.rm = TRUE))
+
+saveRDS(ftb_by_puma, here("data", "clean", "ftb_by_puma.rds"))
+```
+
+
+## VII. Summary Tables
+
+### A. Average Income and Housing Costs
+
+```{r summary_averages_new}
+# Summary table of average income and housing costs
+summary_stats <- households %>%
+  summarise(
+    avg_income = weighted.mean(income, weight_household, na.rm = TRUE),
+    avg_owncost = weighted.mean(owncost, weight_household, na.rm = TRUE)
+  )
+
+knitr::kable(summary_stats, caption = "Weighted Averages of Household Income and Owner Costs")
+```
+
+```{r summary_averages_new}
+# TODO: add summary table of income and owncost
+```
+
+## VIII. Income Trends by Ownership Status (LARA)
+
+### A. Summary Table: Average Income by Tenure and multyear (Lara. RR)
+```{r income-summary-table}
+income_summary <- data %>%
+  filter(multyear %in% c(2014, 2023),
+         tenure_general %in% c("Owned", "Rented")) %>%
+  mutate(income = as.numeric(as.character(income))) %>%
+  group_by(multyear, tenure_general) %>%
+  summarise(avg_income = mean(income, na.rm = TRUE),
+            .groups = "drop")
+
+print(income_summary)
+```
+
+### B. Line Plot: Average Income Over Time by Tenure (Lara. RR )
+```{r income-line-plot}
+data$income <- as.numeric(as.character(data$income))
+
+data_filtered <- data %>%
+  filter(tenure_general %in% c("Owned", "Rented")) %>%
+  group_by(multyear, tenure_general) %>%
+  summarise(mean_income = mean(income, na.rm = TRUE), .groups = "drop")
+
+ggplot(data_filtered, aes(x = multyear, y = mean_income, color = tenure_general)) +
+  # Highlight 2018-2024 period with a shaded region (behind everything)
+  geom_rect(aes(xmin = 2018, xmax = 2024, ymin = -Inf, ymax = Inf), fill = "lightyellow", alpha = 0.1) +
+  # Add a grey dotted line at the multyear 2020 (behind the trend lines)
+  geom_vline(xintercept = 2020, linetype = "dotted", color = "lightgray", size = 1) +
+  # Dotted line for 2020
+  # Add the trend lines on top
+  geom_line(linewidth = 1) +  # Use linewidth instead of size for trend lines
+  labs(x = "multyear", y = "Average Income", title = "Avg. Income, Owners vs. Renters (2014 - 2023)", color = " ") + # Customize the legend title
+  scale_color_manual(values = c("Owned" = "blue", "Rented" = "red")) +
+  theme_minimal()
+```
+
+
+## IX.  Sex Trends by Homeownership Trends =
+
+### A. Frequency and Summary Statistics (Lara. RR)
+```{r freq-summary}
+freq(data$sex_head)
+freq(data$tenure_general)
+freq(data$cost_burden_category)
+summary(data$housing_cost_burden)
+summary(data$housing_cost)
+```
+
+### B. Homeownership Summary by Sex (Lara. RR. TO REVISE)
+```{r homeownership-rate-by-multyear-and-sex_head}
+homeownership <- data %>%
+  filter(sex_head %in% c("Female", "Male"),
+         tenure_general %in% c("Owned", "Rented")) %>%
+  group_by(multyear, sex_head) %>%
+  summarise(
+    total = n(),
+    owned = sum(tenure_general == "Owned"),
+    prop_owned = owned / total,  # proportion owned (0 to 1)
+    .groups = "drop"
+  ) %>%
+  mutate(prop_owned_pct = prop_owned * 100)
+
+head(homeownership)
+```
+
+## (Lara. RR)
+```{r homeownership-summary}
+homeownership_summary <- homeownership %>%
+  group_by(sex_head) %>%
+  summarise(min_multyear = min(multyear),
+            max_multyear = max(multyear),
+            n_observations = n(),
+            min_rate = min(prop_owned_pct, na.rm = TRUE),
+            max_rate = max(prop_owned_pct, na.rm = TRUE),
+            mean_rate = mean(prop_owned_pct, na.rm = TRUE),
+            median_rate = median(prop_owned_pct, na.rm = TRUE),
+            sd_rate = sd(prop_owned_pct, na.rm = TRUE),
+            .groups = "drop")
+
+print(homeownership_summary)
+```
+
+### C. Trend Plot: Homeownership by Sex (Lara. RR)
+```{r homeownership-trends a}
+# Compute y-range from the data and expand it slightly
+yrange <- range(homeownership$prop_owned_pct, na.rm = TRUE)
+# Add padding of 5 (you can adjust this as needed)
+yrange_expanded <- c(yrange[1] - 5, yrange[2] + 5)
+
+
+# Plot the trends with the highlight and dotted vertical line.
+ggplot(homeownership, aes(x = multyear, y = prop_owned_pct, color = sex_head, linetype = sex_head)) +
+   # Highlight 2018-2024 period with a shaded region (behind everything)
+ scale_y_continuous(limits = c(50, 70)) +
+  geom_rect(aes(xmin = 2018, xmax = 2024, ymin = -Inf, ymax = Inf), 
+            fill = "lightyellow", alpha = 0.1, color = NA) +  # Yellow region behind
+  # Add a grey dotted vertical line at 2020.
+  geom_vline(xintercept = 2020, linetype = "dotted", color = "lightgray", size = 1) +
+  geom_line(linewidth = 1.2) +
+  geom_point() +
+  labs(x = "multyear",
+       y = "Homeownership Rate (%)",
+       title = "Homeownership Trends by Sex of Head of Household (2014-2024)",
+       color = "Sex of HH",
+       linetype = "Sex of HH") +
+  scale_color_manual(values = c("Female" = "purple", "Male" = "orange")) +
+  scale_linetype_manual(values = c("Female" = "solid", "Male" = "solid")) +
+  theme_minimal() +
+  theme(legend.position = "right")
+```
+
+## X. Housing Cost Burden Trends by Sex
+
+### A. Summary Table for Cost Burden (Owners) (Lara. RR TO REVISE )
+```{r}
+data %>%
+  filter(sex_head %in% c("Female", "Male"),
+         tenure_general %in% c("Owned", "Rented")) %>%
+  mutate(group = paste(sex_head, tenure_general)) %>%
+  group_by(group) %>%
+  summarise(
+    total = n(),
+    non_missing = sum(!is.na(housing_cost_burden)),
+    mean_burden = mean(housing_cost_burden, na.rm = TRUE),
+    median_burden = median(housing_cost_burden, na.rm = TRUE)
+  )
+
+```
+
+### (Lara. RR TO REVISE)
+```{r}
+summary_owned <- data %>%
+  # Keep only rows for Female or Male, tenure = Owned, and valid non-NA housing cost burden
+  filter(sex_head %in% c("Female", "Male"),
+         tenure_general == "Owned",
+         !is.na(housing_cost_burden)) %>%
+  # Ensure housing_cost_burden is numeric
+  mutate(housing_cost_burden = as.numeric(as.character(housing_cost_burden))) %>%
+  # Create a grouping variable that labels each row as either "Female Owned" or "Male Owned"
+  mutate(group = paste(sex_head, tenure_general)) %>%
+  group_by(group) %>%
+  summarise(
+    min_multyear       = min(multyear, na.rm = TRUE),
+    max_multyear       = max(multyear, na.rm = TRUE),
+    n_observations = n(),
+    min_burden     = min(housing_cost_burden, na.rm = TRUE),
+    max_burden     = max(housing_cost_burden, na.rm = TRUE),
+    mean_burden    = mean(housing_cost_burden, na.rm = TRUE),
+    median_burden  = median(housing_cost_burden, na.rm = TRUE),
+    sd_burden      = sd(housing_cost_burden, na.rm = TRUE),
+    .groups        = "drop"
+  )
+
+# Print the table to see your summary stats
+print(summary_owned)
+```
+
+### B. Plot: Average Housing Cost Burden (Owners) (Lara. RR)
+```{r}
+# 1. numeric burden
+data$housing_cost_burden <- as.numeric(as.character(data$housing_cost_burden))
+
+# 2. keep valid rows & only Owned
+data_grouped <- data %>% 
+  filter(!is.na(housing_cost_burden),
+         between(housing_cost_burden, 0, 1),
+         sex_head %in% c("Female", "Male"),
+         tenure_general == "Owned") %>%            # only owners
+  mutate(group = paste(sex_head, "Owned")) %>%     # “Female Owned”, “Male Owned”
+  group_by(multyear, group) %>% 
+  summarise(mean_cost_burden = mean(housing_cost_burden) * 1000,
+            .groups = "drop")
+
+# 3. x-position for threshold labels
+x_label <- min(data_grouped$multyear) + 
+           (max(data_grouped$multyear) - min(data_grouped$multyear)) / 4
+
+# 4. y-axis transform: linear ≤ 50, compressed above 50
+compress_trans <- trans_new(
+  "compress",
+  transform = function(x) ifelse(x <= 50, x, 50 + (x - 50) / 10),
+  inverse   = function(y) ifelse(y <= 50, y, (y - 50) * 10 + 50)
+)
+
+# 5. plot
+ggplot(data_grouped,
+       aes(multyear, mean_cost_burden, colour = group, linetype = group)) +
+  annotate("rect", xmin = 2018, xmax = 2024, ymin = 0, ymax = 100,
+           fill = "lightyellow", alpha = .1) +
+  geom_vline(xintercept = 2020, linetype = "dotted",
+             colour = "lightgray", size = 1) +
+  geom_hline(yintercept = 30, colour = "green")  +
+  geom_hline(yintercept = 50, colour = "orange") +
+  geom_hline(yintercept = 100, colour = "red")   +
+  annotate("text", x = x_label, y = 30,
+           label = "Affordable (<30%)", colour = "green",  vjust = -0.4) +
+  annotate("text", x = x_label, y = 50,
+           label = "Moderate (30-50%)", colour = "orange", vjust = -0.4) +
+  annotate("text", x = x_label, y = 100,
+           label = "Severe (>50%)",     colour = "red",    vjust = -0.4) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  scale_y_continuous(trans = compress_trans,
+                     name  = "Average Housing Cost Burden (%)") +
+  scale_colour_manual(values = c("Female Owned" = "purple",
+                                 "Male Owned"   = "orange")) +   # typo fixed
+  scale_linetype_manual(values = c("Female Owned" = "solid",
+                                   "Male Owned"   = "solid")) +  # typo fixed
+  labs(title   = "Homeowner Housing Cost Burden Trends by Sex (2014-2024)",
+       x       = "multyear",
+       colour  = "Group",
+       linetype = "Group") +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+```
+
+
+## XI. Ownership by Age and Race (MEG)
+
+### A. Age Ownership Analysis (Meg. RR TO REVISE )
+```{r age-cleaning-ownership}
+# Convert 90+ to numeric and clean
+data$age_head[data$age_head == "90 (90+ in 1980 and 1990)"] <- "90"
+
+#make age_head numeric
+data$age_head <- as.numeric(data$age_head)
+# check
+summary(data$age_head)
+
+#drop NAs
+data_clean <- data%>% filter(!is.na(age_head))
+#note: dropped about 12,000 NA's here 
+
+# Clean and recode tenure variable
+data_clean <- data_clean %>%
+  filter(multyear >= 2014 & multyear <= 2024,
+         !is.na(tenure_general),
+         tenure_general != "Other/Unknown") %>%
+  mutate(tenure_general = recode(tenure_general, "Owned" = "Owner", "Rented" = "Renter"),
+         # ownership dummy
+         owner = if_else(tenure_general == "Owner", 1, 0))
+
+# check table
+prop.table(table(data_clean$owner))
+
+```
+### B. Ownership Rate by multyear (Meg. RR)
+```{r}
+# ownership rate by multyear
+ownership_by_multyear <- data_clean %>%
+  group_by(multyear) %>%
+  summarise(ownership_rate = mean(owner, na.rm = TRUE))
+
+ggplot(ownership_by_multyear, aes(x = multyear, y = ownership_rate)) +
+  annotate("rect", xmin = 2018, xmax = 2023, ymin = -Inf, ymax = Inf, fill = "yellow", alpha = 0.1) +
+geom_vline(xintercept = 2020, linetype = "dotted", color = "lightgrey", linewidth = 1) +
+  geom_line(color = "#3b7EA1", size = 1.5) +
+  geom_point(color = "#F4A261", size = 3) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1),
+                     expand = expansion(mult = c(1, 1))) +  # <- this adds 5% padding at top/bottom
+  labs(x = "multyear", y = "Total Ownership Rate", title = "CA Homeownership Rate 2014-2023") +
+  theme_minimal()
+
+#detailed ownership rates by multyear
+tenure_prop_table <- data_clean %>%
+  group_by(multyear, tenure_detailed) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  group_by(multyear) %>%
+  mutate(proportion = count / sum(count)) %>%
+  select(multyear, tenure_detailed, proportion) %>%
+  pivot_wider(names_from = multyear, values_from = proportion, values_fill = 0)
+print(tenure_prop_table) 
+#why is ownership so high
+
+sum(data_clean$owner, na.rm=TRUE)
+
+```
+
+### C. Ownership Rate by Age and multyear (Meg. RR)
+```{r}
+#summarize ownership by age group and multyear
+data_ownership <- data_clean %>%
+  group_by(multyear, age_head_group)%>%
+  summarise(
+    ownership_rate = mean(owner, na.rm = TRUE),
+    count = n(),
+    .groups = "drop" )
+
+# Fix group_by in weighted summary
+data_ownership_weighted <- data_clean %>%
+  filter(!is.na(owner), !is.na(weight_household), !is.na(age_head_group), age_head > 17) %>%
+  group_by(multyear, age_head_group) %>%  # <- USE age_head_group
+  summarise(
+    ownership_rate = sum(owner * weight_household) / sum(weight_household),
+    count = n(),
+    .groups = "drop"
+  )
+
+# Fix plot aesthetics
+plot_share_owner <- ggplot(data_ownership_weighted, aes(x = multyear, y = ownership_rate, color = age_head_group, group = age_head_group)) +
+  annotate("rect", xmin = 2018, xmax = 2023, ymin = -Inf, ymax = Inf, fill = "yellow", alpha = 0.1) +
+  geom_vline(xintercept = 2020, linetype = "dotted", color = "lightgrey", linewidth = 1) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3) +
+  geom_text(aes(label = scales::percent(ownership_rate, accuracy = 1)), 
+            vjust = -0.5, size = 3, show.legend = FALSE) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    title = "Homeownership Rates by Age Cohort (2014–2023)",
+    x = "Year",
+    y = "Ownership Rate",
+    color = "Age Cohort"
+  ) +
+  scale_color_manual(values = c(  "#D9661f", "#3b7EA1", "#859438", "#EE1f60", "#9467bd")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+
+print(plot_share_owner)
+
+```
+
+### D. Change in Ownership Rate  (Meg. RR)
+
+```{r}
+#show change in ownership rate (since first multyear. should we use a different starting place?)
+data_ownership_share <- data_ownership_weighted %>%
+  group_by(age_head_group) %>%
+  arrange(multyear) %>%
+  mutate(change_from_start = ownership_rate - first(ownership_rate))
+
+plot_change_in_owner <- ggplot(data_ownership_share, aes(x = multyear, y = change_from_start, color = age_head_group, group = age_head_group)) + annotate("rect", xmin = 2018, xmax = 2023, ymin = -Inf, ymax = Inf, fill = "yellow", alpha = 0.1) +
+geom_vline(xintercept = 2020, linetype = "dotted", color = "lightgrey", linewidth = 1) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    title = "Change in Homeownership Rate by Age Cohort (vs. Starting multyear)",
+    x = "multyear",
+    y = "Change from Starting Ownership Rate",
+    color = "Age Cohort"
+  ) +
+   scale_color_manual(values = c("#D9661f", "#3b7EA1", "#859438", "#EE1f60"))  +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+ggsave("change_in_ownership_rate.png", plot = plot_change_in_owner, width = 8, height = 6, dpi = 300)
+```
+
+### E. Average Age of Owners vs Renter (Weighted)  (Meg. RR.)
+```{r}
+# Check :confirm that renters have valid age and weight value
+data_clean %>%
+  filter(tenure_general == "Renter") %>%
+  summarise(
+    total_rows = n(),
+    missing_age = sum(is.na(age_head)),
+    missing_weight = sum(is.na(weight_household)),
+    nonmissing_both = sum(!is.na(age_head) & !is.na(weight_household))
+  )
+
+renter_summary <- data_clean %>%
+  filter(tenure_general == "Renter", !is.na(age_head), !is.na(weight_household)) %>%
+  group_by(multyear) %>%
+  summarise(
+    avg_age = sum(age_head * weight_household) / sum(weight_household),
+    count = n(),
+    .groups = "drop"
+  )
+
+print(renter_summary)
+
+```
+
+```{r}
+# Clean and ensure tenure_general is a proper character/factor
+data_clean <- data_clean %>%
+  mutate(tenure_general = as_factor(tenure_general))
+
+# Summarize with weighted average
+data_age_summary_weighted <- data_clean %>%
+  filter(!is.na(age_head), !is.na(weight_household), !is.na(tenure_general)) %>%
+  group_by(multyear, tenure_general) %>%
+  summarise(
+    avg_age = sum(age_head * weight_household) / sum(weight_household),
+    count = n(),
+    .groups = "drop"
+  )
+
+
+plot_age <- ggplot(data_age_summary_weighted, aes(x = multyear, y = avg_age, color = tenure_general, group = tenure_general)) +
+  annotate("rect", xmin = 2018, xmax = 2023, ymin = -Inf, ymax = Inf, fill = "yellow", alpha = 0.1) +
+  geom_vline(xintercept = 2020, linetype = "dotted", color = "lightgrey", linewidth = 1) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3) +
+  labs(
+    title = "Average Age of Renters vs. Owners (2016–2023)",
+    x = "Year",
+    y = "Average Age of Head of Household",
+    color = "Tenure Type"
+  ) +
+  scale_color_manual(values = c("Owner" = "#EE1f60", "Renter" = "#3b7EA1")) +
+  scale_y_continuous(limits = c(30, 60)) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+print(plot_age)
+
+ggsave("avg_age_renters_vs_owners.png", plot = plot_age, width = 8, height = 6, dpi = 300)
+
+```
+
+
+## XII. Homeownership and Cost Burden by Race
+
+### A. Weighted Ownership by Race (Meg)
+```{r ownership-by-race}
+data_summary_race_weighted <- data %>%
+  filter(multyear >= 2014 & multyear <= 2023,
+         !is.na(tenure_general),
+         !is.na(race_ethnicity_head),
+         !is.na(weight_household)) %>%
+  mutate(owner = if_else(tenure_general == "Owned", 1, 0)) %>%
+  group_by(multyear, race_ethnicity_head) %>%
+  summarise(
+    ownership_rate = sum(owner * weight_household) / sum(weight_household),
+    count = n(),
+    .groups = "drop"
+  )
+
+ggplot(data_summary_race_weighted, aes(x = multyear, y = ownership_rate, color = race_ethnicity_head)) +
+  annotate("rect", xmin = 2018, xmax = 2023, ymin = -Inf, ymax = Inf, fill = "yellow", alpha = 0.1) +
+  geom_vline(xintercept = 2020, linetype = "dotted", color = "lightgrey", linewidth = 1) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 3) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "CA Homeownership Rates by Race (2014–2023)",
+       x = "multyear", y = "Ownership Rate", color = "Race") +
+  theme_minimal() +
+  theme(legend.position = "right")
+```
+
+## XIII Housing Burden (KARLA)
+
+#### 1. Trend Over Time by AMI Category
+Shows how cost burden changed over time within each AMI group.
+```{r plot-burden-by-ami}
+households %>%
+  filter(multyear >= 2018, !is.na(ami_category), !is.na(housing_cost_burden)) %>%
+  mutate(burden_flag = housing_cost_burden > 0.3) %>%
+  group_by(multyear, ami_category) %>%
+  summarise(overburdened = weighted.mean(burden_flag, weight_household, na.rm = TRUE), .groups = "drop") %>%
+  ggplot(aes(x = multyear, y = overburdened, color = ami_category)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "Cost Burden Over Time by AMI Category (2018–2023)",
+    x = "Year", y = "Percent Overburdened", color = "AMI Category"
+  ) +
+  theme_minimal()
+
+```
+#### 2. Boxplot of Cost Burden Distribution
+Shows how much variation there is in cost burden within each AMI level.
+```{r}
+households %>%
+  filter(!is.na(ami_category), !is.na(housing_cost_burden)) %>%
+  ggplot(aes(x = ami_category, y = housing_cost_burden)) +
+  geom_boxplot(fill = "#3b7ea1", alpha = 0.7) +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  labs(
+    title = "Distribution of Housing Cost Burden by AMI Category",
+    x = "AMI Category", y = "Housing Cost Burden (as % of Income)"
+  ) +
+  theme_minimal()
+
+```
+#### 3. Population Share Annotations
+Still want to show the average overburden rate by AMI, but now with context on group size.
+```{r}
+households %>%
+  filter(!is.na(ami_category), !is.na(housing_cost_burden)) %>%
+  mutate(burden_flag = housing_cost_burden > 0.3) %>%
+  group_by(ami_category) %>%
+  summarise(
+    n = sum(weight_household, na.rm = TRUE),
+    overburdened = weighted.mean(burden_flag, weight_household, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(label = paste0("n = ", format(round(n), big.mark = ","))) %>%
+  ggplot(aes(x = reorder(ami_category, -overburdened), y = overburdened)) +
+  geom_col(fill = "#F4A261") +
+  geom_text(aes(label = label), hjust = -0.1, size = 3.2) +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  labs(
+    title = "Overburden Rate by AMI Category (with Population Size)",
+    x = "AMI Category", y = "Percent Overburdened"
+  ) +
+  theme_minimal()
+```
+#### 4. Burden by AMI Category (selected years & bar)
+```{r ami-cost-burden-stacked}
+plot_data <- households %>%
+  filter(multyear %in% c(2018, 2021, 2023),
+         !is.na(ami_category),
+         !is.na(cost_burden_category)) %>%
+  group_by(multyear, ami_category, cost_burden_category) %>%
+  summarise(households = sum(weight_household, na.rm = TRUE), .groups = "drop") %>%
+  group_by(multyear, ami_category) %>%
+  mutate(share = households / sum(households)) %>%
+  ungroup()
+
+ggplot(plot_data, aes(x = ami_category, y = share, fill = cost_burden_category)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  facet_wrap(~ multyear, nrow = 1) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_fill_manual(
+    values = c("Affordable (<30%)" = "#F8766D",
+               "Moderate (30-50%)" = "#00BFC4",
+               "Severe (>50%)" = "#C77CFF",
+               "Missing" = "gray70"),
+    drop = FALSE
+  ) +
+  labs(
+    title = "Cost Burden Distribution by AMI Category (2018, 2021, 2023)",
+    x = "AMI Category", y = "Share of Households", fill = "Burden Level"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )
+
+```
+####  5.severe burden rate over time
+```{r}
+severe_burden <- households %>%
+  filter(cost_burden_category == "Severe (>50%)",
+         !is.na(ami_category)) %>%
+  group_by(multyear, ami_category) %>%
+  summarise(share_severe = sum(weight_household, na.rm = TRUE) / 
+              sum(weight_household[!is.na(cost_burden_category)]), .groups = "drop")
+
+ggplot(severe_burden, aes(x = multyear, y = share_severe, color = ami_category)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "Severe Cost Burden Rates Over Time by AMI Category",
+    x = "Year", y = "Percent Severely Burdened", color = "AMI Category"
+  ) +
+  theme_minimal()
+
+```
+
+#### 5. Burden by Race 
+````{r}
+cost_burden_summary <- households %>%
+  filter(!is.na(housing_cost_burden),
+         !is.na(weight_household),
+         !is.na(race_ethnicity_head),
+         housing_cost_burden <= 1) %>%  # remove bad values
+  mutate(burden_flag = housing_cost_burden > 0.3) %>%
+  group_by(race_ethnicity_head) %>%
+  summarise(
+    overburdened = weighted.mean(burden_flag, weight_household, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
+  )
+
+ggplot(cost_burden_summary, aes(x = reorder(race_ethnicity_head, -overburdened), y = overburdened)) +
+  geom_col(fill = "#3b7EA1") +
+  scale_y_continuous(labels = scales::percent) +
+  coord_flip() +
+  labs(
+    title = "Share of Households Overburdened by Housing Costs",
+    y = "Percent Overburdened", x = "Race/Ethnicity"
+  ) +
+  theme_minimal()
+
+
+````
+
+#### 6. Cost Burden by Race and Year (2018–2023)
+```{r cost-burden-by-race-time}
+# Step 1: Ensure correct data types
+households <- households %>%
+  mutate(
+    housing_cost_burden = as.numeric(housing_cost_burden),
+    weight_household = as.numeric(weight_household)
+  )
+
+# Step 2: Compute overburdened flag and summarize by year and race
+cost_burden_by_multyear_race <- households %>%
+  filter(multyear >= 2018,
+         !is.na(housing_cost_burden),
+         !is.na(race_ethnicity_head),
+         !is.na(weight_household)) %>%
+  mutate(burden_flag = housing_cost_burden > 0.3) %>%
+  group_by(multyear, race_ethnicity_head) %>%
+  summarise(overburdened = weighted.mean(burden_flag, weight_household, na.rm = TRUE),
+            .groups = "drop")
+
+# Step 3: Plot with optional annotation for 2020
+ggplot(cost_burden_by_multyear_race,
+       aes(x = multyear, y = overburdened, color = race_ethnicity_head)) +
+  annotate("rect", xmin = 2020, xmax = 2021, ymin = 0, ymax = 1,
+           fill = "lightgray", alpha = 0.1) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2) +
+  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title = "Cost Burden by Race and Year (2018–2023)",
+       x = "Year",
+       y = "Percent Overburdened",
+       color = "Race/Ethnicity") +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "right")
+
+
+```
+
+## XIV. Time Series: Ownership and Cost Burden Trends
+```{r homeownership-trends}
+home_by_multyear <- households %>%
+  filter(!is.na(tenure_general), multyear >= 2018) %>%
+  mutate(homeowner = tenure_general == "Owned") %>%
+  group_by(multyear) %>%
+  summarise(home_own_rate = weighted.mean(homeowner, weight_household))
+
+ggplot(home_by_multyear, aes(x = multyear, y = home_own_rate)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "Homeownership Rate in California (2018–2023)",
+       y = "Homeownership Rate", x = "Year")
+```
+
+
+

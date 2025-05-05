@@ -1,0 +1,1637 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={IPA},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{IPA}
+\author{}
+\date{\vspace{-2.5em}2025-04-30}
+
+\begin{document}
+\maketitle
+
+\subsection{I. Project Overview}\label{i.-project-overview}
+
+This file prepares household-level ACS data from IPUMS for analysis of
+housing cost burden and ownership trends in California.
+
+\textbf{Key assumptions:}
+
+\begin{itemize}
+\tightlist
+\item
+  Only the householder (PERNUM == 1) is used to represent
+  household-level traits
+\item
+  Household and person weights are already scaled and applied as
+  provided
+\item
+  ACS uses complex sampling; analysis accounts for clustering using
+  \texttt{survey::svydesign}
+\item
+  Data for 2020 may have quality issues due to COVID-19 disruptions
+\item
+  Income and housing costs are already CPI-adjusted in
+  \_CPIU\_2010variables - Using : Race: Simplified race/ethnicity
+  identification {[}of Location of household head{]}
+\end{itemize}
+
+\subsection{II. Set Up}\label{ii.-set-up}
+
+\subsubsection{A. Load Libraries}\label{a.-load-libraries}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(survey)      }
+\FunctionTok{library}\NormalTok{(scales)      }
+\FunctionTok{library}\NormalTok{(ggthemes)    }
+\FunctionTok{library}\NormalTok{(ipumsr)}
+\FunctionTok{library}\NormalTok{(tidyverse)}
+\FunctionTok{library}\NormalTok{(here)}
+\FunctionTok{library}\NormalTok{(pastecs)}
+\FunctionTok{library}\NormalTok{(furniture)}
+\FunctionTok{library}\NormalTok{(gridExtra)}
+\FunctionTok{library}\NormalTok{(readxl)}
+\FunctionTok{library}\NormalTok{(writexl)}
+\FunctionTok{library}\NormalTok{(lubridate)}
+\FunctionTok{library}\NormalTok{(modeest)}
+\FunctionTok{library}\NormalTok{(stringr)}
+\FunctionTok{library}\NormalTok{(fastLink)}
+\FunctionTok{library}\NormalTok{(stargazer)}
+\FunctionTok{library}\NormalTok{(psych)}
+\FunctionTok{library}\NormalTok{(tibble)}
+\FunctionTok{library}\NormalTok{(infer)}
+\FunctionTok{library}\NormalTok{(purrr)}
+\FunctionTok{library}\NormalTok{(ggrepel)}
+\FunctionTok{library}\NormalTok{(latex2exp)}
+\FunctionTok{library}\NormalTok{(haven)}
+\FunctionTok{library}\NormalTok{(data.table)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{B. Clear memory}\label{b.-clear-memory}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{rm}\NormalTok{(}\AttributeTok{list =} \FunctionTok{ls}\NormalTok{(}\AttributeTok{all.names =} \ConstantTok{TRUE}\NormalTok{))}
+\FunctionTok{gc}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##           used  (Mb) gc trigger  (Mb) limit (Mb) max used  (Mb)
+## Ncells 2497880 133.5    4784675 255.6         NA  4132282 220.7
+## Vcells 4287654  32.8   10146329  77.5      16384  6357063  48.6
+\end{verbatim}
+
+\subsubsection{C. Custom Functions}\label{c.-custom-functions}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#some self{-}created functions that I frequently use}
+\NormalTok{freq }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x) \{}
+\NormalTok{frequency }\OtherTok{\textless{}{-}} \FunctionTok{table}\NormalTok{(x, }\AttributeTok{useNA =} \StringTok{"ifany"}\NormalTok{)}
+\NormalTok{proportion }\OtherTok{\textless{}{-}} \FunctionTok{round}\NormalTok{(}\FunctionTok{prop.table}\NormalTok{(}\FunctionTok{table}\NormalTok{(x, }\AttributeTok{useNA =} \StringTok{"ifany"}\NormalTok{),),}\DecValTok{3}\NormalTok{)}
+\FunctionTok{cbind}\NormalTok{(frequency, proportion)}
+\NormalTok{\}}
+
+\NormalTok{freq\_sort }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x) \{}
+\NormalTok{frequency }\OtherTok{\textless{}{-}} \FunctionTok{table}\NormalTok{(x, }\AttributeTok{useNA =} \StringTok{"ifany"}\NormalTok{)}
+\NormalTok{proportion }\OtherTok{\textless{}{-}} \FunctionTok{round}\NormalTok{(}\FunctionTok{prop.table}\NormalTok{(}\FunctionTok{table}\NormalTok{(x, }\AttributeTok{useNA =} \StringTok{"ifany"}\NormalTok{),),}\DecValTok{3}\NormalTok{)}
+\NormalTok{out }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(frequency, proportion)}
+\NormalTok{out[}\FunctionTok{order}\NormalTok{(out[,}\DecValTok{1}\NormalTok{],}\AttributeTok{decreasing=}\ConstantTok{TRUE}\NormalTok{),]}
+\NormalTok{\}}
+
+\NormalTok{freq2 }\OtherTok{=} \ControlFlowTok{function}\NormalTok{(x,y)\{}
+\FunctionTok{table}\NormalTok{(x,y, }\AttributeTok{useNA =} \StringTok{"ifany"}\NormalTok{)}
+\NormalTok{\}}
+
+\NormalTok{freq2\_col }\OtherTok{\textless{}{-}}\ControlFlowTok{function}\NormalTok{(x,y)\{}
+\FunctionTok{prop.table}\NormalTok{(}\FunctionTok{table}\NormalTok{(x,y,}\AttributeTok{useNA =} \StringTok{"ifany"}\NormalTok{),}\DecValTok{2}\NormalTok{)}
+\NormalTok{\}}
+
+\NormalTok{freq2\_row }\OtherTok{\textless{}{-}}\ControlFlowTok{function}\NormalTok{(x,y)\{}
+\FunctionTok{prop.table}\NormalTok{(}\FunctionTok{table}\NormalTok{(x,y,}\AttributeTok{useNA =} \StringTok{"ifany"}\NormalTok{),}\DecValTok{1}\NormalTok{)}
+\NormalTok{\}}
+
+\NormalTok{  ttable }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(dependent, by\_variable)\{}
+\NormalTok{  level }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"By variable=0"}\NormalTok{, }\StringTok{"By variable=1"}\NormalTok{, }\StringTok{"Difference"}\NormalTok{)}
+\NormalTok{  means }\OtherTok{\textless{}{-}} \FunctionTok{round}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\FunctionTok{mean}\NormalTok{(dependent[by\_variable}\SpecialCharTok{==}\DecValTok{0}\NormalTok{], }\AttributeTok{na.rm=}\ConstantTok{TRUE}\NormalTok{),}
+  \FunctionTok{mean}\NormalTok{(dependent[by\_variable}\SpecialCharTok{==}\DecValTok{1}\NormalTok{], }\AttributeTok{na.rm=}\ConstantTok{TRUE}\NormalTok{),}
+  \FunctionTok{mean}\NormalTok{(dependent[by\_variable}\SpecialCharTok{==}\DecValTok{1}\NormalTok{], }\AttributeTok{na.rm=}\ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{{-}}
+  \FunctionTok{mean}\NormalTok{(dependent[by\_variable}\SpecialCharTok{==}\DecValTok{0}\NormalTok{], }\AttributeTok{na.rm=}\ConstantTok{TRUE}\NormalTok{)),}\DecValTok{3}\NormalTok{)}
+\NormalTok{  se\_0 }\OtherTok{\textless{}{-}} \FunctionTok{sd}\NormalTok{(dependent[by\_variable}\SpecialCharTok{==}\DecValTok{0}\NormalTok{],}
+  \AttributeTok{na.rm=}\ConstantTok{TRUE}\NormalTok{)}\SpecialCharTok{/}\FunctionTok{sqrt}\NormalTok{(}\FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(dependent[by\_variable}\SpecialCharTok{==}\DecValTok{0}\NormalTok{])))}
+\NormalTok{  se\_1 }\OtherTok{\textless{}{-}} \FunctionTok{sd}\NormalTok{(dependent[by\_variable}\SpecialCharTok{==}\DecValTok{1}\NormalTok{],}
+  \AttributeTok{na.rm=}\ConstantTok{TRUE}\NormalTok{)}\SpecialCharTok{/}\FunctionTok{sqrt}\NormalTok{(}\FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(dependent[by\_variable}\SpecialCharTok{==}\DecValTok{1}\NormalTok{])))}
+\NormalTok{  se\_diff }\OtherTok{\textless{}{-}}\FunctionTok{sqrt}\NormalTok{(se\_0}\SpecialCharTok{\^{}}\DecValTok{2}\SpecialCharTok{+}\NormalTok{ se\_1}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}
+\NormalTok{  se }\OtherTok{\textless{}{-}} \FunctionTok{round}\NormalTok{(}\FunctionTok{c}\NormalTok{(se\_0, se\_1, se\_diff),}\DecValTok{3}\NormalTok{)}
+\NormalTok{  df\_correction }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{  N }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(dependent[by\_variable}\SpecialCharTok{==}\DecValTok{0}\NormalTok{])) ,}
+  \FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(dependent[by\_variable}\SpecialCharTok{==}\DecValTok{01}\NormalTok{])), }\FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(dependent)))}
+\NormalTok{  results }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{cbind}\NormalTok{(level, means, se, N, df\_correction))}
+\NormalTok{  results}\SpecialCharTok{$}\NormalTok{means }\OtherTok{\textless{}{-}}\FunctionTok{as.numeric}\NormalTok{(results}\SpecialCharTok{$}\NormalTok{means)}
+\NormalTok{  results}\SpecialCharTok{$}\NormalTok{se }\OtherTok{\textless{}{-}}\FunctionTok{as.numeric}\NormalTok{(results}\SpecialCharTok{$}\NormalTok{se)}
+\NormalTok{  results}\SpecialCharTok{$}\NormalTok{N }\OtherTok{\textless{}{-}}\FunctionTok{as.numeric}\NormalTok{(results}\SpecialCharTok{$}\NormalTok{N)}
+\NormalTok{  results}\SpecialCharTok{$}\NormalTok{df\_correction }\OtherTok{\textless{}{-}}\FunctionTok{as.numeric}\NormalTok{(results}\SpecialCharTok{$}\NormalTok{df\_correction)}
+\NormalTok{  ttable }\OtherTok{\textless{}{-}}\NormalTok{ results }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{t\_stat =} \FunctionTok{round}\NormalTok{(means}\SpecialCharTok{/}\NormalTok{se,}\DecValTok{3}\NormalTok{),}
+  \AttributeTok{df\_t =}\NormalTok{ N }\SpecialCharTok{{-}}\NormalTok{ df\_correction,}
+  \AttributeTok{p\_value =} \DecValTok{2}\SpecialCharTok{*}\FunctionTok{pt}\NormalTok{(}\FunctionTok{abs}\NormalTok{(t\_stat), }\AttributeTok{df=}\NormalTok{df\_t, }\AttributeTok{lower.tail=}\ConstantTok{FALSE}\NormalTok{)}
+\NormalTok{  ) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(level, means, se, t\_stat, df\_t, p\_value )}
+  \FunctionTok{rm}\NormalTok{(level, means, se\_0, se\_1, se\_diff, se, df\_correction, N, results)}
+\NormalTok{  ttable}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{III. Load IPUMS data}\label{iii.-load-ipums-data}
+
+\subsubsection{A. Import Data and DDI
+File}\label{a.-import-data-and-ddi-file}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mem.maxVSize}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 16384
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ControlFlowTok{if}\NormalTok{ (}\SpecialCharTok{!}\FunctionTok{require}\NormalTok{(}\StringTok{"ipumsr"}\NormalTok{)) }\FunctionTok{stop}\NormalTok{(}\StringTok{"Reading IPUMS data into R requires the ipumsr package. It can be installed using the following command: install.packages(\textquotesingle{}ipumsr\textquotesingle{})"}\NormalTok{)}
+\NormalTok{ddi }\OtherTok{\textless{}{-}} \FunctionTok{read\_ipums\_ddi}\NormalTok{(}\StringTok{"usa\_00003.xml"}\NormalTok{)}
+\NormalTok{data }\OtherTok{\textless{}{-}} \FunctionTok{read\_ipums\_micro}\NormalTok{(ddi)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Use of data from IPUMS USA is subject to conditions including that users should cite the data appropriately. Use command `ipums_conditions()` for more details.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\FunctionTok{object.size}\NormalTok{(data), }\AttributeTok{units =} \StringTok{"GB"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 4.3 Gb
+\end{verbatim}
+
+\subsubsection{B. Rename Variables to
+Lowercase}\label{b.-rename-variables-to-lowercase}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# rename vars to lower}
+\FunctionTok{names}\NormalTok{(data) }\OtherTok{\textless{}{-}} \FunctionTok{tolower}\NormalTok{(}\FunctionTok{names}\NormalTok{(data))}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{IV. Descriptive Checks}\label{iv.-descriptive-checks}
+
+\subsubsection{A. General Summary}\label{a.-general-summary}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# summary stats for the whole dataset }
+\FunctionTok{summary}\NormalTok{(data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       year         multyear        sample           serial       
+##  Min.   :2018   Min.   :2014   Min.   :201803   Min.   : 331646  
+##  1st Qu.:2019   1st Qu.:2017   1st Qu.:201903   1st Qu.: 527107  
+##  Median :2020   Median :2018   Median :202003   Median : 710115  
+##  Mean   :2020   Mean   :2018   Mean   :202052   Mean   : 710785  
+##  3rd Qu.:2022   3rd Qu.:2020   3rd Qu.:202203   3rd Qu.: 893122  
+##  Max.   :2023   Max.   :2023   Max.   :202303   Max.   :1097044  
+##                                                                  
+##     cbserial            numprec           hhwt          cluster         
+##  Min.   :2.014e+12   Min.   : 1.00   Min.   :  1.0   Min.   :2.018e+12  
+##  1st Qu.:2.017e+12   1st Qu.: 2.00   1st Qu.: 11.0   1st Qu.:2.019e+12  
+##  Median :2.018e+12   Median : 3.00   Median : 15.0   Median :2.020e+12  
+##  Mean   :2.018e+12   Mean   : 3.53   Mean   : 20.1   Mean   :2.020e+12  
+##  3rd Qu.:2.020e+12   3rd Qu.: 5.00   3rd Qu.: 24.0   3rd Qu.:2.022e+12  
+##  Max.   :2.023e+12   Max.   :20.00   Max.   :645.0   Max.   :2.023e+12  
+##                                                                         
+##     statefip      puma          met2013          strata              gq       
+##  Min.   :6   Min.   :  101   Min.   :    0   Min.   :  10106   Min.   :1.000  
+##  1st Qu.:6   1st Qu.: 3724   1st Qu.:31080   1st Qu.: 372406   1st Qu.:1.000  
+##  Median :6   Median : 5910   Median :40140   Median : 591006   Median :1.000  
+##  Mean   :6   Mean   : 5501   Mean   :35420   Mean   : 550072   Mean   :1.121  
+##  3rd Qu.:6   3rd Qu.: 7316   3rd Qu.:41860   3rd Qu.: 731606   3rd Qu.:1.000  
+##  Max.   :6   Max.   :11302   Max.   :49700   Max.   :1130206   Max.   :5.000  
+##                                                                               
+##     ownershp       ownershpd        owncost      owncost_cpiu_2010
+##  Min.   :0.000   Min.   : 0.00   Min.   :    0   Min.   :      0  
+##  1st Qu.:1.000   1st Qu.:13.00   1st Qu.:   13   1st Qu.:4200862  
+##  Median :1.000   Median :13.00   Median :   30   Median :8401479  
+##  Mean   :1.316   Mean   :15.48   Mean   :40696   Mean   :7008345  
+##  3rd Qu.:2.000   3rd Qu.:22.00   3rd Qu.:99999   3rd Qu.:9999999  
+##  Max.   :2.000   Max.   :22.00   Max.   :99999   Max.   :9999999  
+##                                                                   
+##     hhincome       hhincome_cpiu_2010     qownersh          qowncost     
+##  Min.   : -16942   Min.   :   -14451   Min.   :0.00000   Min.   :0.0000  
+##  1st Qu.:  52996   1st Qu.:    42616   1st Qu.:0.00000   1st Qu.:0.0000  
+##  Median : 102407   Median :    81801   Median :0.00000   Median :0.0000  
+##  Mean   : 583496   Mean   : 45694443   Mean   :0.06361   Mean   :0.6585  
+##  3rd Qu.: 183300   3rd Qu.:   145667   3rd Qu.:0.00000   3rd Qu.:0.0000  
+##  Max.   :9999999   Max.   :999999999   Max.   :4.00000   Max.   :4.0000  
+##                                                                          
+##    qhhincome        pernum           perwt           famunit      
+##  Min.   :0.00   Min.   : 1.000   Min.   :  1.00   Min.   : 1.000  
+##  1st Qu.:0.00   1st Qu.: 1.000   1st Qu.: 11.00   1st Qu.: 1.000  
+##  Median :0.00   Median : 2.000   Median : 16.00   Median : 1.000  
+##  Mean   :1.58   Mean   : 2.265   Mean   : 21.24   Mean   : 1.055  
+##  3rd Qu.:4.00   3rd Qu.: 3.000   3rd Qu.: 25.00   3rd Qu.: 1.000  
+##  Max.   :4.00   Max.   :20.000   Max.   :679.00   Max.   :20.000  
+##                                                                   
+##     famsize           relate          related            sex       
+##  Min.   : 1.000   Min.   : 1.000   Min.   : 101.0   Min.   :1.000  
+##  1st Qu.: 2.000   1st Qu.: 1.000   1st Qu.: 101.0   1st Qu.:1.000  
+##  Median : 3.000   Median : 2.000   Median : 201.0   Median :2.000  
+##  Mean   : 3.338   Mean   : 3.441   Mean   : 348.4   Mean   :1.506  
+##  3rd Qu.: 4.000   3rd Qu.: 3.000   3rd Qu.: 301.0   3rd Qu.:2.000  
+##  Max.   :20.000   Max.   :13.000   Max.   :1301.0   Max.   :2.000  
+##                                                                    
+##       age             race           raced           hispan      
+##  Min.   : 0.00   Min.   :1.000   Min.   :100.0   Min.   :0.0000  
+##  1st Qu.:21.00   1st Qu.:1.000   1st Qu.:100.0   1st Qu.:0.0000  
+##  Median :40.00   Median :1.000   Median :100.0   Median :0.0000  
+##  Mean   :40.62   Mean   :3.218   Mean   :327.3   Mean   :0.5342  
+##  3rd Qu.:59.00   3rd Qu.:6.000   3rd Qu.:640.0   3rd Qu.:1.0000  
+##  Max.   :94.00   Max.   :9.000   Max.   :990.0   Max.   :4.0000  
+##                                                                  
+##     hispand           tribe             tribed          rachsing      
+##  Min.   :  0.00   Min.   :   0.00   Min.   :     0   Min.   :1        
+##  1st Qu.:  0.00   1st Qu.:   0.00   1st Qu.:     0   1st Qu.:1        
+##  Median :  0.00   Median :   0.00   Median :     0   Median :4        
+##  Mean   : 55.47   Mean   :  26.63   Mean   :  2663   Mean   :3        
+##  3rd Qu.:100.00   3rd Qu.:   0.00   3rd Qu.:     0   3rd Qu.:5        
+##  Max.   :498.00   Max.   :3002.00   Max.   :300200   Max.   :5        
+##                                                      NA's   :3693357  
+##     diffrem         diffphys        diffmob          diffcare     
+##  Min.   :0.000   Min.   :0.000   Min.   :0.0000   Min.   :0.0000  
+##  1st Qu.:1.000   1st Qu.:1.000   1st Qu.:1.0000   1st Qu.:1.0000  
+##  Median :1.000   Median :1.000   Median :1.0000   Median :1.0000  
+##  Mean   :1.002   Mean   :1.018   Mean   :0.8911   Mean   :0.9848  
+##  3rd Qu.:1.000   3rd Qu.:1.000   3rd Qu.:1.0000   3rd Qu.:1.0000  
+##  Max.   :2.000   Max.   :2.000   Max.   :2.0000   Max.   :2.0000  
+##                                                                   
+##     diffsens        diffeye         diffhear        vetstat      
+##  Min.   :1.000   Min.   :1.000   Min.   :1.000   Min.   :0.0000  
+##  1st Qu.:1.000   1st Qu.:1.000   1st Qu.:1.000   1st Qu.:1.0000  
+##  Median :1.000   Median :1.000   Median :1.000   Median :1.0000  
+##  Mean   :1.051   Mean   :1.023   Mean   :1.035   Mean   :0.8551  
+##  3rd Qu.:1.000   3rd Qu.:1.000   3rd Qu.:1.000   3rd Qu.:1.0000  
+##  Max.   :2.000   Max.   :2.000   Max.   :2.000   Max.   :2.0000  
+##                                                                  
+##     vetstatd           qage            qrelate             qsex         
+##  Min.   : 0.000   Min.   :0.00000   Min.   :0.00000   Min.   :0.000000  
+##  1st Qu.:11.000   1st Qu.:0.00000   1st Qu.:0.00000   1st Qu.:0.000000  
+##  Median :11.000   Median :0.00000   Median :0.00000   Median :0.000000  
+##  Mean   : 9.334   Mean   :0.06568   Mean   :0.05748   Mean   :0.002073  
+##  3rd Qu.:11.000   3rd Qu.:0.00000   3rd Qu.:0.00000   3rd Qu.:0.000000  
+##  Max.   :20.000   Max.   :4.00000   Max.   :4.00000   Max.   :4.000000  
+##                                                                         
+##     qhispan            qrace           qdifsens         qdifphys    
+##  Min.   :0.00000   Min.   :0.0000   Min.   :0.0000   Min.   :0.000  
+##  1st Qu.:0.00000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.000  
+##  Median :0.00000   Median :0.0000   Median :0.0000   Median :0.000  
+##  Mean   :0.06544   Mean   :0.4849   Mean   :0.4487   Mean   :0.428  
+##  3rd Qu.:0.00000   3rd Qu.:0.0000   3rd Qu.:0.0000   3rd Qu.:0.000  
+##  Max.   :4.00000   Max.   :4.0000   Max.   :4.0000   Max.   :4.000  
+##                                                                     
+##     qdifrem         qdifmob          qdifcare         qdifeye     
+##  Min.   :0.000   Min.   :0.0000   Min.   :0.0000   Min.   :0.000  
+##  1st Qu.:0.000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.000  
+##  Median :0.000   Median :0.0000   Median :0.0000   Median :0.000  
+##  Mean   :0.427   Mean   :0.3586   Mean   :0.4297   Mean   :0.441  
+##  3rd Qu.:0.000   3rd Qu.:0.0000   3rd Qu.:0.0000   3rd Qu.:0.000  
+##  Max.   :4.000   Max.   :4.0000   Max.   :4.0000   Max.   :4.000  
+##                                                                   
+##     qdifhear         qvetstat       pernum_head       pernum_mom     
+##  Min.   :0.0000   Min.   :0.0000   Min.   :1        Min.   : 1       
+##  1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:1        1st Qu.: 1       
+##  Median :0.0000   Median :0.0000   Median :1        Median : 2       
+##  Mean   :0.4308   Mean   :0.3439   Mean   :1        Mean   : 2       
+##  3rd Qu.:0.0000   3rd Qu.:0.0000   3rd Qu.:1        3rd Qu.: 2       
+##  Max.   :4.0000   Max.   :4.0000   Max.   :1        Max.   :19       
+##                                    NA's   :506237   NA's   :7780194  
+##   pernum_mom2        famunit_head     famunit_mom       famunit_mom2     
+##  Min.   : 2         Min.   :1        Min.   : 1        Min.   :1         
+##  1st Qu.: 2         1st Qu.:1        1st Qu.: 1        1st Qu.:1         
+##  Median : 2         Median :1        Median : 1        Median :1         
+##  Mean   : 3         Mean   :1        Mean   : 1        Mean   :1         
+##  3rd Qu.: 3         3rd Qu.:1        3rd Qu.: 1        3rd Qu.:1         
+##  Max.   :16         Max.   :1        Max.   :11        Max.   :5         
+##  NA's   :11092962   NA's   :506237   NA's   :7780194   NA's   :11092962  
+##   famsize_head     famsize_mom       famsize_mom2       relate_head    
+##  Min.   : 1.0     Min.   : 2        Min.   : 3         Min.   :1       
+##  1st Qu.: 2.0     1st Qu.: 4        1st Qu.: 4         1st Qu.:1       
+##  Median : 3.0     Median : 4        Median : 4         Median :1       
+##  Mean   : 3.5     Mean   : 5        Mean   : 5         Mean   :1       
+##  3rd Qu.: 5.0     3rd Qu.: 5        3rd Qu.: 6         3rd Qu.:1       
+##  Max.   :20.0     Max.   :20        Max.   :18         Max.   :1       
+##  NA's   :506237   NA's   :7780194   NA's   :11092962   NA's   :506237  
+##    relate_mom       relate_mom2          sex_head         sex_mom       
+##  Min.   : 1        Min.   : 2         Min.   :1.0      Min.   :2        
+##  1st Qu.: 1        1st Qu.: 2         1st Qu.:1.0      1st Qu.:2        
+##  Median : 2        Median : 2         Median :1.0      Median :2        
+##  Mean   : 2        Mean   : 5         Mean   :1.5      Mean   :2        
+##  3rd Qu.: 2        3rd Qu.:10         3rd Qu.:2.0      3rd Qu.:2        
+##  Max.   :12        Max.   :12         Max.   :2.0      Max.   :2        
+##  NA's   :7780194   NA's   :11092962   NA's   :506237   NA's   :7780194  
+##     sex_mom2           age_head        race_head       hispan_head    
+##  Min.   :2          Min.   :15.0     Min.   :1.0      Min.   :0.0     
+##  1st Qu.:2          1st Qu.:39.0     1st Qu.:1.0      1st Qu.:0.0     
+##  Median :2          Median :50.0     Median :1.0      Median :0.0     
+##  Mean   :2          Mean   :51.1     Mean   :3.1      Mean   :0.5     
+##  3rd Qu.:2          3rd Qu.:62.0     3rd Qu.:6.0      3rd Qu.:1.0     
+##  Max.   :2          Max.   :94.0     Max.   :9.0      Max.   :4.0     
+##  NA's   :11092962   NA's   :506237   NA's   :506237   NA's   :506237  
+##    tribe_head     rachsing_head      diffrem_head    diffphys_head   
+##  Min.   :   0.0   Min.   :1         Min.   :1        Min.   :1.0     
+##  1st Qu.:   0.0   1st Qu.:1         1st Qu.:1        1st Qu.:1.0     
+##  Median :   0.0   Median :3         Median :1        Median :1.0     
+##  Mean   :  27.2   Mean   :3         Mean   :1        Mean   :1.1     
+##  3rd Qu.:   0.0   3rd Qu.:5         3rd Qu.:1        3rd Qu.:1.0     
+##  Max.   :3002.0   Max.   :5         Max.   :2        Max.   :2.0     
+##  NA's   :506237   NA's   :4018803   NA's   :506237   NA's   :506237  
+##   diffmob_head    diffcare_head    diffsens_head     diffeye_head   
+##  Min.   :1        Min.   :1        Min.   :1.0      Min.   :1       
+##  1st Qu.:1        1st Qu.:1        1st Qu.:1.0      1st Qu.:1       
+##  Median :1        Median :1        Median :1.0      Median :1       
+##  Mean   :1        Mean   :1        Mean   :1.1      Mean   :1       
+##  3rd Qu.:1        3rd Qu.:1        3rd Qu.:1.0      3rd Qu.:1       
+##  Max.   :2        Max.   :2        Max.   :2.0      Max.   :2       
+##  NA's   :506237   NA's   :506237   NA's   :506237   NA's   :506237  
+##  diffhear_head     vetstat_head   
+##  Min.   :1        Min.   :0.0     
+##  1st Qu.:1        1st Qu.:1.0     
+##  Median :1        Median :1.0     
+##  Mean   :1        Mean   :1.1     
+##  3rd Qu.:1        3rd Qu.:1.0     
+##  Max.   :2        Max.   :2.0     
+##  NA's   :506237   NA's   :506237
+\end{verbatim}
+
+\subsubsection{B. Frequency Checks}\label{b.-frequency-checks}
+
+Notes:
+
+\begin{itemize}
+\item
+  ownershp: Ownership of dwelling (tenure) {[}general version{]}
+\item
+  ownershpd:Ownership of dwelling (tenure) {[}detailed version{]}
+\item
+  Year= Census Year
+\item
+  For the multi-year ACS/PRCS samples, YEAR indicates the last year of
+  data included
+\item
+  For the actual year of survey in these multi-year data, see MULTYEAR.
+\item
+  MultYear = IPUMS year of survey , multi-year ACS/PRCS
+
+  \begin{itemize}
+  \tightlist
+  \item
+    MULTYEAR identifies the actual year of survey in multi-year ACS/PRCS
+    samples.
+  \item
+    MULTYEAR gives the single-year sample from which the case was drawn
+    (2005, 2006, or 2007 for the 2005-2007 3-year data; 2006, 2007, or
+    2008 for the 2006-2008 3-year data; and so on).
+  \end{itemize}
+\item
+  The distribution of records per year varies in the multiyear var
+  because we are looking at rolling samples.So for exmaple, the year
+  2015 will have records from the 2014-2018 and 2015-2019 sample. Thus
+  2014 and 2023 only have 1 year of data.
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# age}
+\FunctionTok{freq}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{age)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    frequency proportion
+## 0      99885      0.009
+## 1     104888      0.009
+## 2     110041      0.010
+## 3     112528      0.010
+## 4     113413      0.010
+## 5     117833      0.011
+## 6     119652      0.011
+## 7     123499      0.011
+## 8     124010      0.011
+## 9     127199      0.011
+## 10    131642      0.012
+## 11    131727      0.012
+## 12    132922      0.012
+## 13    136367      0.012
+## 14    136011      0.012
+## 15    140104      0.013
+## 16    141825      0.013
+## 17    144593      0.013
+## 18    155913      0.014
+## 19    149579      0.013
+## 20    142577      0.013
+## 21    139705      0.013
+## 22    137130      0.012
+## 23    139505      0.013
+## 24    139967      0.013
+## 25    145265      0.013
+## 26    146476      0.013
+## 27    146687      0.013
+## 28    150380      0.014
+## 29    149561      0.013
+## 30    156991      0.014
+## 31    146971      0.013
+## 32    151270      0.014
+## 33    147844      0.013
+## 34    147942      0.013
+## 35    152409      0.014
+## 36    144952      0.013
+## 37    143302      0.013
+## 38    143536      0.013
+## 39    140013      0.013
+## 40    149027      0.013
+## 41    135315      0.012
+## 42    136256      0.012
+## 43    135787      0.012
+## 44    134803      0.012
+## 45    140784      0.013
+## 46    137474      0.012
+## 47    139114      0.013
+## 48    141949      0.013
+## 49    142219      0.013
+## 50    154938      0.014
+## 51    143691      0.013
+## 52    146722      0.013
+## 53    145549      0.013
+## 54    150395      0.014
+## 55    153889      0.014
+## 56    151997      0.014
+## 57    152525      0.014
+## 58    154003      0.014
+## 59    152945      0.014
+## 60    157327      0.014
+## 61    149098      0.013
+## 62    147573      0.013
+## 63    142858      0.013
+## 64    139535      0.013
+## 65    140703      0.013
+## 66    132695      0.012
+## 67    129829      0.012
+## 68    123715      0.011
+## 69    119723      0.011
+## 70    118006      0.011
+## 71    107929      0.010
+## 72    102606      0.009
+## 73     94726      0.009
+## 74     88509      0.008
+## 75     82239      0.007
+## 76     75180      0.007
+## 77     69181      0.006
+## 78     64970      0.006
+## 79     59012      0.005
+## 80     56461      0.005
+## 81     50057      0.005
+## 82     47515      0.004
+## 83     42618      0.004
+## 84     39746      0.004
+## 85     36676      0.003
+## 86     32807      0.003
+## 87     29907      0.003
+## 88     27088      0.002
+## 89     23915      0.002
+## 90     21382      0.002
+## 94     84297      0.008
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#state}
+\FunctionTok{freq}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{statefip)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   frequency proportion
+## 6  11103379          1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# race}
+\FunctionTok{freq}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{race)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   frequency proportion
+## 1   6157806      0.555
+## 2    538746      0.049
+## 3    130426      0.012
+## 4    510763      0.046
+## 5     87611      0.008
+## 6   1215046      0.109
+## 7   1480881      0.133
+## 8    875117      0.079
+## 9    106983      0.010
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{freq}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{race\_head)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      frequency proportion
+## 1      6100296      0.549
+## 2       455262      0.041
+## 3       128416      0.012
+## 4       505008      0.045
+## 5        86315      0.008
+## 6      1170865      0.105
+## 7      1400385      0.126
+## 8       685185      0.062
+## 9        65410      0.006
+## <NA>    506237      0.046
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# owenership}
+\FunctionTok{freq}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{ownershp)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   frequency proportion
+## 0    506237      0.046
+## 1   6585964      0.593
+## 2   4011178      0.361
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{freq}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{ownershpd)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    frequency proportion
+## 0     506237      0.046
+## 12   1852289      0.167
+## 13   4733675      0.426
+## 21    131829      0.012
+## 22   3879349      0.349
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# dissability}
+\FunctionTok{freq}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{diffcare)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   frequency proportion
+## 0    540755      0.049
+## 1  10190390      0.918
+## 2    372234      0.034
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{freq}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{diffphys)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   frequency proportion
+## 0    540755      0.049
+## 1   9818533      0.884
+## 2    744091      0.067
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{freq}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{diffrem)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   frequency proportion
+## 0    540755      0.049
+## 1   9998693      0.901
+## 2    563931      0.051
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{freq}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{diffmob)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   frequency proportion
+## 0   1821617      0.164
+## 1   8669141      0.781
+## 2    612621      0.055
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{freq}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{diffeye)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   frequency proportion
+## 1  10850487      0.977
+## 2    252892      0.023
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{freq}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{diffhear)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   frequency proportion
+## 1  10711348      0.965
+## 2    392031      0.035
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# income}
+\FunctionTok{summary}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{hhincome)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  -16942   52996  102407  583496  183300 9999999
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{hhincome\_cpiu\_2010)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
+##    -14451     42616     81801  45694443    145667 999999999
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#yeare}
+\FunctionTok{print}\NormalTok{(data }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{count}\NormalTok{(year))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 2
+##    year       n
+##   <int>   <int>
+## 1  2018 1879923
+## 2  2019 1887461
+## 3  2020 1816306
+## 4  2021 1826332
+## 5  2022 1839928
+## 6  2023 1853429
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(data }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{count}\NormalTok{(multyear))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 10 x 2
+##    multyear       n
+##       <dbl>   <int>
+##  1     2014  372553
+##  2     2015  749886
+##  3     2016 1128105
+##  4     2017 1510300
+##  5     2018 1894085
+##  6     2019 1900455
+##  7     2020 1215152
+##  8     2021 1158183
+##  9     2022  782342
+## 10     2023  392318
+\end{verbatim}
+
+\subsection{V. Data Cleaning and Variable
+Setup}\label{v.-data-cleaning-and-variable-setup}
+
+\subsubsection{A. Create Identifiers and Key
+Variables}\label{a.-create-identifiers-and-key-variables}
+
+Notes:
+
+\begin{itemize}
+\item
+  SERIAL: is an identifying number unique to each household record in a
+  given sample. All person records are assigned the same serial number
+  as the household record that they follow.
+\item
+  PERNUM numbers all persons within each household consecutively in the
+  order in which they appear on the original census or survey form. When
+  combined with SAMPLE and SERIAL, PERNUM uniquely identifies each
+  person within the IPUMS.
+\item
+  HHWT is a 6-digit numeric variable which indicates how many households
+  in the U.S. population are represented by a given household in an
+  IPUMS sample and has two implied decimals. For example, a HHWT value
+  of 010461 should be interpreted as 104.61. HHWT specific variable
+  codes for missing, edited, or unidentified observations, observations
+  not applicable (N/A), observations not in universe (NIU), top and
+  bottom value coding, etc. are provided below if applicable by Census
+  year (and data sample if specified). However, our HHWT values are
+  showing as numeric values like 26, 34, 38. This ️likely means that the
+  weights were imported already scaled correctly (i.e., the implied
+  decimals have already been applied). So we will not
+  weigh\_person/household as recommended above hhwt/100.
+\item
+  Generate person identifier: household identifier + \# that identifies
+  the person within the household
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{household\_id =}\NormalTok{ serial, }\CommentTok{\# }
+    \AttributeTok{person\_id =} \FunctionTok{paste}\NormalTok{(serial, pernum, }\AttributeTok{sep =} \StringTok{"{-}"}\NormalTok{), }
+    \AttributeTok{income =}\NormalTok{ hhincome\_cpiu\_2010,}
+    \AttributeTok{housing\_cost =}\NormalTok{ owncost\_cpiu\_2010, }
+    \AttributeTok{weight\_person =}\NormalTok{ perwt,}
+    \AttributeTok{weight\_household =}\NormalTok{ hhwt}
+\NormalTok{  )}
+
+\CommentTok{\# remove original data(can read after, I just don\textquotesingle{}t have memory)}
+\FunctionTok{rm}\NormalTok{(data)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{B. Set Up Survey Designs}\label{b.-set-up-survey-designs}
+
+\begin{itemize}
+\item
+  The ACS data isn't collected randomly --- it uses a complex design
+  where some types of households are more likely to be selected than
+  others, and households are grouped (clustered) by geography.
+\item
+  If we ignore this, our results might look more precise than they
+  really are (i.e., too small standard errors).
+\item
+  Using svydesign() helps R understand how the data was collected so it
+  can:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Properly apply the weights (so each household counts for the right
+    number of people),
+  \item
+    Adjust for clustering (so confidence intervals and p-values are more
+    realistic).
+  \end{itemize}
+\item
+  We want to use this design for:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Calculating means or proportions with standard errors
+  \item
+    Plotting trends with confidence intervals
+  \item
+    Running regressions or hypothesis tests
+  \end{itemize}
+\item
+  CLUSTER: Household cluster for variance estimation
+\end{itemize}
+
+\textbf{Household level survey design}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{hh\_design }\OtherTok{\textless{}{-}} \FunctionTok{svydesign}\NormalTok{(}
+  \AttributeTok{id =} \SpecialCharTok{\textasciitilde{}}\NormalTok{cluster,}
+  \AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{weight\_household,}
+  \AttributeTok{data =}\NormalTok{ data\_clean}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\textbf{person level survey design}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{person\_design }\OtherTok{\textless{}{-}} \FunctionTok{svydesign}\NormalTok{(}
+  \AttributeTok{id =} \SpecialCharTok{\textasciitilde{}}\NormalTok{cluster,}
+  \AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{perwt,}
+  \AttributeTok{data =}\NormalTok{ data\_clean}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{C. Clean and Recode
+Variables}\label{c.-clean-and-recode-variables}
+
+\begin{itemize}
+\tightlist
+\item
+  Age
+\item
+  Race \& Ethnicity
+\item
+  Veteran Status
+\item
+  Disability
+\item
+  Tenure (Ownership)
+\item
+  Household Income Brackets
+\item
+  Housing Cost Burden
+\item
+  Household Size
+\end{itemize}
+
+\paragraph{1. Age}\label{age}
+
+Person
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# clean age }
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{age\_group =} \FunctionTok{cut}\NormalTok{(age, }\AttributeTok{breaks =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{17}\NormalTok{, }\DecValTok{34}\NormalTok{, }\DecValTok{54}\NormalTok{, }\DecValTok{74}\NormalTok{, }\ConstantTok{Inf}\NormalTok{), }
+                    \AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"0{-}17"}\NormalTok{, }\StringTok{"18{-}34"}\NormalTok{, }\StringTok{"35{-}54"}\NormalTok{, }\StringTok{"55{-}74"}\NormalTok{, }\StringTok{"75+"}\NormalTok{))}
+\NormalTok{  )}
+\FunctionTok{freq}\NormalTok{(data\_clean}\SpecialCharTok{$}\NormalTok{age\_group)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       frequency proportion
+## 0-17    2148254      0.193
+## 18-34   2493763      0.225
+## 35-54   2858235      0.257
+## 55-74   2660191      0.240
+## 75+      843051      0.076
+## <NA>      99885      0.009
+\end{verbatim}
+
+House
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{age\_head\_group =} \FunctionTok{cut}\NormalTok{(age, }\AttributeTok{breaks =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{17}\NormalTok{, }\DecValTok{34}\NormalTok{, }\DecValTok{54}\NormalTok{, }\DecValTok{74}\NormalTok{, }\ConstantTok{Inf}\NormalTok{), }
+                         \AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"0{-}17"}\NormalTok{, }\StringTok{"18{-}34"}\NormalTok{, }\StringTok{"35{-}54"}\NormalTok{, }\StringTok{"55{-}74"}\NormalTok{, }\StringTok{"75+"}\NormalTok{))}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+\paragraph{2. Race \& ethnicity}\label{race-ethnicity}
+
+Notes:
+
+\begin{itemize}
+\tightlist
+\item
+  Recode Hispanic origin and race/ethnicity using numeric codes
+\item
+  HISPAN: 0 = Not Hispanic
+\end{itemize}
+
+Person
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{race\_group =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      race }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \StringTok{"White"}\NormalTok{,}
+\NormalTok{      race }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \StringTok{"Black"}\NormalTok{,}
+\NormalTok{      race }\SpecialCharTok{==} \DecValTok{3} \SpecialCharTok{\textasciitilde{}} \StringTok{"Native American"}\NormalTok{,}
+\NormalTok{      race }\SpecialCharTok{\%in\%} \DecValTok{4}\SpecialCharTok{:}\DecValTok{6} \SpecialCharTok{\textasciitilde{}} \StringTok{"Asian/Pacific Islander"}\NormalTok{,}
+\NormalTok{      race }\SpecialCharTok{\%in\%} \DecValTok{7}\SpecialCharTok{:}\DecValTok{8} \SpecialCharTok{\textasciitilde{}} \StringTok{"Multiracial"}\NormalTok{,}
+\NormalTok{      race }\SpecialCharTok{==} \DecValTok{9} \SpecialCharTok{\textasciitilde{}} \StringTok{"Other"}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \StringTok{"Unknown"}
+\NormalTok{    )}
+\NormalTok{  )}
+
+
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{race\_ethnicity =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      hispan }\SpecialCharTok{!=} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \StringTok{"Hispanic"}\NormalTok{,}
+\NormalTok{      hispan }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ race\_group }\SpecialCharTok{==} \StringTok{"White"} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}Hispanic White"}\NormalTok{,}
+\NormalTok{      hispan }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ race\_group }\SpecialCharTok{==} \StringTok{"Black"} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}Hispanic Black"}\NormalTok{,}
+\NormalTok{      hispan }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ race\_group }\SpecialCharTok{==} \StringTok{"Asian/Pacific Islander"} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}Hispanic Asian/Pacific Islander"}\NormalTok{,}
+\NormalTok{      hispan }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ race\_group }\SpecialCharTok{==} \StringTok{"Native American"} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}Hispanic Native American"}\NormalTok{,}
+\NormalTok{      hispan }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ race\_group }\SpecialCharTok{==} \StringTok{"Multiracial"} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}Hispanic Multiracial"}\NormalTok{,}
+\NormalTok{      hispan }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ race\_group }\SpecialCharTok{==} \StringTok{"Other"} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}Hispanic Other"}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \StringTok{"Unknown"}
+\NormalTok{    )}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+Household
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{race\_group\_head =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      race\_head }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \StringTok{"White"}\NormalTok{,}
+\NormalTok{      race\_head }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \StringTok{"Black"}\NormalTok{,}
+\NormalTok{      race\_head }\SpecialCharTok{==} \DecValTok{3} \SpecialCharTok{\textasciitilde{}} \StringTok{"Native American"}\NormalTok{,}
+\NormalTok{      race\_head }\SpecialCharTok{\%in\%} \DecValTok{4}\SpecialCharTok{:}\DecValTok{6} \SpecialCharTok{\textasciitilde{}} \StringTok{"Asian/Pacific Islander"}\NormalTok{,}
+\NormalTok{      race\_head }\SpecialCharTok{\%in\%} \DecValTok{7}\SpecialCharTok{:}\DecValTok{8} \SpecialCharTok{\textasciitilde{}} \StringTok{"Multiracial"}\NormalTok{,}
+\NormalTok{      race\_head }\SpecialCharTok{==} \DecValTok{9} \SpecialCharTok{\textasciitilde{}} \StringTok{"Other"}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \StringTok{"Unknown"}
+\NormalTok{    ),}
+    
+    \AttributeTok{race\_ethnicity\_head =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      hispan\_head }\SpecialCharTok{!=} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \StringTok{"Hispanic"}\NormalTok{,  }\CommentTok{\# 0 = Not Hispanic}
+\NormalTok{      hispan\_head }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ race\_group\_head }\SpecialCharTok{==} \StringTok{"White"} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}Hispanic White"}\NormalTok{,}
+\NormalTok{      hispan\_head }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ race\_group\_head }\SpecialCharTok{==} \StringTok{"Black"} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}Hispanic Black"}\NormalTok{,}
+\NormalTok{      hispan\_head }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ race\_group\_head }\SpecialCharTok{==} \StringTok{"Asian/Pacific Islander"} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}Hispanic Asian/Pacific Islander"}\NormalTok{,}
+\NormalTok{      hispan\_head }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ race\_group\_head }\SpecialCharTok{==} \StringTok{"Native American"} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}Hispanic Native American"}\NormalTok{,}
+\NormalTok{      hispan\_head }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ race\_group\_head }\SpecialCharTok{==} \StringTok{"Multiracial"} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}Hispanic Multiracial"}\NormalTok{,}
+\NormalTok{      hispan\_head }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ race\_group\_head }\SpecialCharTok{==} \StringTok{"Other"} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}Hispanic Other"}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \StringTok{"Unknown"}
+\NormalTok{    )}
+\NormalTok{  )}
+
+\FunctionTok{freq}\NormalTok{(data\_clean}\SpecialCharTok{$}\NormalTok{race\_ethnicity\_head)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                                     frequency proportion
+## Hispanic                              3549422      0.320
+## Non-Hispanic Asian/Pacific Islander   1738041      0.157
+## Non-Hispanic Black                     436828      0.039
+## Non-Hispanic Multiracial               277316      0.025
+## Non-Hispanic Native American            56174      0.005
+## Non-Hispanic Other                      32047      0.003
+## Non-Hispanic White                    4507314      0.406
+## Unknown                                506237      0.046
+\end{verbatim}
+
+\paragraph{3.Veteran Status}\label{veteran-status}
+
+Person
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{veteran\_person =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      vetstatd }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \StringTok{"Veteran"}\NormalTok{,}
+\NormalTok{      vetstatd }\SpecialCharTok{==} \DecValTok{3} \SpecialCharTok{\textasciitilde{}} \StringTok{"Active duty"}\NormalTok{,}
+\NormalTok{      vetstatd }\SpecialCharTok{==} \DecValTok{4} \SpecialCharTok{\textasciitilde{}} \StringTok{"Reserve/National Guard"}\NormalTok{,}
+\NormalTok{      vetstatd }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}veteran"}\NormalTok{,}
+\NormalTok{      vetstatd }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_character\_}\NormalTok{,  }\CommentTok{\# NIU (not in universe)}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \StringTok{"Unknown"}
+\NormalTok{    )}
+\NormalTok{  )}
+\FunctionTok{freq}\NormalTok{(data\_clean}\SpecialCharTok{$}\NormalTok{veteran\_person)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         frequency proportion
+## Unknown   8999833      0.811
+## <NA>      2103546      0.189
+\end{verbatim}
+
+Household
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{veteran\_head =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      vetstat\_head }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \StringTok{"Veteran"}\NormalTok{,}
+\NormalTok{      vetstat\_head }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \StringTok{"Non{-}veteran"}\NormalTok{,}
+\NormalTok{      vetstat\_head }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_character\_}\NormalTok{,  }\CommentTok{\# NIU (Not in Universe)}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \StringTok{"Unknown"}
+\NormalTok{    )}
+\NormalTok{  )}
+
+\FunctionTok{freq}\NormalTok{(data\_clean}\SpecialCharTok{$}\NormalTok{veteran\_head)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             frequency proportion
+## Non-veteran    702425      0.063
+## Unknown        506237      0.046
+## Veteran       9893622      0.891
+## <NA>             1095      0.000
+\end{verbatim}
+
+\paragraph{4. Disability}\label{disability}
+
+Person
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \CommentTok{\# 1 = Yes (has difficulty), 2 = No, 0 = NIU}
+    \AttributeTok{diffrem\_flag =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      diffrem }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{,}
+\NormalTok{      diffrem }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{,}
+\NormalTok{      diffrem }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}\NormalTok{,  }\CommentTok{\# Not in universe}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}
+\NormalTok{    ),}
+    
+    \AttributeTok{diffphys\_flag =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      diffphys }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{,}
+\NormalTok{      diffphys }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{,}
+\NormalTok{      diffphys }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}
+\NormalTok{    ),}
+    
+    \AttributeTok{diffmob\_flag =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      diffmob }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{,}
+\NormalTok{      diffmob }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{,}
+\NormalTok{      diffmob }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}
+\NormalTok{    ),}
+    
+    \AttributeTok{diffcare\_flag =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      diffcare }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{,}
+\NormalTok{      diffcare }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{,}
+\NormalTok{      diffcare }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}
+\NormalTok{    ),}
+    
+    \AttributeTok{diffsens\_flag =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      diffsens }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{,}
+\NormalTok{      diffsens }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{,}
+\NormalTok{      diffsens }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}
+\NormalTok{    )}
+\NormalTok{  )}
+
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{disability\_person =} \FunctionTok{case\_when}\NormalTok{(}
+      \FunctionTok{rowSums}\NormalTok{(}\FunctionTok{select}\NormalTok{(., diffrem\_flag, diffphys\_flag, diffmob\_flag, diffcare\_flag, diffsens\_flag), }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{\textgreater{}=} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \StringTok{"Yes"}\NormalTok{,}
+      \FunctionTok{rowSums}\NormalTok{(}\FunctionTok{select}\NormalTok{(., diffrem\_flag, diffphys\_flag, diffmob\_flag, diffcare\_flag, diffsens\_flag), }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \StringTok{"No"}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_character\_}
+\NormalTok{    )}
+\NormalTok{  )}
+
+\FunctionTok{freq}\NormalTok{(data\_clean}\SpecialCharTok{$}\NormalTok{disability\_person)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##     frequency proportion
+## No      75425      0.007
+## Yes  11027954      0.993
+\end{verbatim}
+
+Household
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Disability flags for household head using numeric values}
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{diffrem\_head\_flag =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      diffrem\_head }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{,}
+\NormalTok{      diffrem\_head }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{,}
+\NormalTok{      diffrem\_head }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}
+\NormalTok{    ),}
+    \AttributeTok{diffphys\_head\_flag =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      diffphys\_head }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{,}
+\NormalTok{      diffphys\_head }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{,}
+\NormalTok{      diffphys\_head }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}
+\NormalTok{    ),}
+    \AttributeTok{diffmob\_head\_flag =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      diffmob\_head }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{,}
+\NormalTok{      diffmob\_head }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{,}
+\NormalTok{      diffmob\_head }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}
+\NormalTok{    ),}
+    \AttributeTok{diffcare\_head\_flag =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      diffcare\_head }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{,}
+\NormalTok{      diffcare\_head }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{,}
+\NormalTok{      diffcare\_head }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}
+\NormalTok{    ),}
+    \AttributeTok{diffsens\_head\_flag =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      diffsens\_head }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{,}
+\NormalTok{      diffsens\_head }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{,}
+\NormalTok{      diffsens\_head }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_real\_}
+\NormalTok{    )}
+\NormalTok{  )}
+
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{disability\_head =} \FunctionTok{case\_when}\NormalTok{(}
+      \FunctionTok{rowSums}\NormalTok{(}\FunctionTok{select}\NormalTok{(., diffrem\_head\_flag, diffphys\_head\_flag, diffmob\_head\_flag, diffcare\_head\_flag, diffsens\_head\_flag), }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{\textgreater{}=} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \StringTok{"Yes"}\NormalTok{,}
+      \FunctionTok{rowSums}\NormalTok{(}\FunctionTok{select}\NormalTok{(., diffrem\_head\_flag, diffphys\_head\_flag, diffmob\_head\_flag, diffcare\_head\_flag, diffsens\_head\_flag), }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{==} \DecValTok{0} \SpecialCharTok{\textasciitilde{}} \StringTok{"No"}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \ConstantTok{NA\_character\_}
+\NormalTok{    )}
+\NormalTok{  )}
+
+
+\FunctionTok{freq}\NormalTok{(data\_clean}\SpecialCharTok{$}\NormalTok{disability\_head)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##     frequency proportion
+## No     546251      0.049
+## Yes  10557128      0.951
+\end{verbatim}
+
+\paragraph{5. HH Ownership}\label{hh-ownership}
+
+Notes:
+
+\begin{itemize}
+\tightlist
+\item
+  OWNERSHP: indicates whether the housing unit was rented or owned by
+  its inhabitants. Housing units acquired with a mortgage or other
+  lending arrangement(s) are classified as ``owned,'' even if repayment
+  was not yet completed.
+\end{itemize}
+
+Detailed
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{tenure\_detailed =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      ownershpd }\SpecialCharTok{==} \DecValTok{12} \SpecialCharTok{\textasciitilde{}} \StringTok{"Owned {-} Free and Clear"}\NormalTok{,}
+\NormalTok{      ownershpd }\SpecialCharTok{==} \DecValTok{13} \SpecialCharTok{\textasciitilde{}} \StringTok{"Owned {-} With Mortgage"}\NormalTok{,}
+\NormalTok{      ownershpd }\SpecialCharTok{==} \DecValTok{22} \SpecialCharTok{\textasciitilde{}} \StringTok{"Rented {-} Cash Rent"}\NormalTok{,}
+\NormalTok{      ownershpd }\SpecialCharTok{==} \DecValTok{21} \SpecialCharTok{\textasciitilde{}} \StringTok{"Rented {-} No Cash Rent"}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \StringTok{"Other/Unknown"}
+\NormalTok{    )}
+\NormalTok{  )}
+
+\FunctionTok{count}\NormalTok{(data\_clean, tenure\_detailed)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 5 x 2
+##   tenure_detailed              n
+##   <chr>                    <int>
+## 1 Other/Unknown           506237
+## 2 Owned - Free and Clear 1852289
+## 3 Owned - With Mortgage  4733675
+## 4 Rented - Cash Rent     3879349
+## 5 Rented - No Cash Rent   131829
+\end{verbatim}
+
+General
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{tenure\_general =} \FunctionTok{case\_when}\NormalTok{(}
+      \FunctionTok{str\_detect}\NormalTok{(tenure\_detailed, }\StringTok{"Owned"}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \StringTok{"Owned"}\NormalTok{,}
+      \FunctionTok{str\_detect}\NormalTok{(tenure\_detailed, }\StringTok{"Rented"}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \StringTok{"Rented"}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \StringTok{"Other/Unknown"}
+\NormalTok{    )}
+\NormalTok{  )}
+
+\FunctionTok{count}\NormalTok{(data\_clean, tenure\_general)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 3 x 2
+##   tenure_general       n
+##   <chr>            <int>
+## 1 Other/Unknown   506237
+## 2 Owned          6585964
+## 3 Rented         4011178
+\end{verbatim}
+
+\paragraph{6. Household income}\label{household-income}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# create income brackets }
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{income\_bracket =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{    income }\SpecialCharTok{\textless{}} \DecValTok{25000} \SpecialCharTok{\textasciitilde{}} \StringTok{"\textless{} $25k"}\NormalTok{,}
+\NormalTok{    income }\SpecialCharTok{\textgreater{}=} \DecValTok{25000} \SpecialCharTok{\&}\NormalTok{ income }\SpecialCharTok{\textless{}} \DecValTok{50000} \SpecialCharTok{\textasciitilde{}} \StringTok{"$25k {-} $49k"}\NormalTok{,}
+\NormalTok{    income }\SpecialCharTok{\textgreater{}=} \DecValTok{50000} \SpecialCharTok{\&}\NormalTok{ income }\SpecialCharTok{\textless{}} \DecValTok{75000} \SpecialCharTok{\textasciitilde{}} \StringTok{"$50k {-} $74k"}\NormalTok{,}
+\NormalTok{    income }\SpecialCharTok{\textgreater{}=} \DecValTok{75000} \SpecialCharTok{\&}\NormalTok{ income }\SpecialCharTok{\textless{}} \DecValTok{100000} \SpecialCharTok{\textasciitilde{}} \StringTok{"$75k {-} $99k"}\NormalTok{,}
+\NormalTok{    income }\SpecialCharTok{\textgreater{}=} \DecValTok{100000} \SpecialCharTok{\textasciitilde{}} \StringTok{"$100k+"}\NormalTok{,}
+    \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \StringTok{"Unknown"}
+\NormalTok{   )}
+\NormalTok{  )}
+\FunctionTok{freq}\NormalTok{(data\_clean}\SpecialCharTok{$}\NormalTok{income\_bracket)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             frequency proportion
+## < $25k        1423689      0.128
+## $100k+        4521824      0.407
+## $25k - $49k   1928770      0.174
+## $50k - $74k   1774890      0.160
+## $75k - $99k   1454206      0.131
+\end{verbatim}
+
+\paragraph{7. Housing burden}\label{housing-burden}
+
+Notes:
+
+\begin{itemize}
+\tightlist
+\item
+  Create a housing cost burden ratio: housing\_cost\_burden
+  =monthly\_housing\_cost/ annual\_household\_income
+\item
+  If income is 0 or missing, it assigns NA to avoid divding by 0.
+\item
+  Selected monthly owner costs {[}standardized using CPIU\_2010{]}
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{income =} \FunctionTok{as.numeric}\NormalTok{(hhincome\_cpiu\_2010),}
+    \AttributeTok{housing\_cost =} \FunctionTok{as.numeric}\NormalTok{(owncost\_cpiu\_2010),}
+    \AttributeTok{housing\_cost\_burden =} \FunctionTok{ifelse}\NormalTok{(income }\SpecialCharTok{\textgreater{}} \DecValTok{0}\NormalTok{, housing\_cost }\SpecialCharTok{/}\NormalTok{ income, }\ConstantTok{NA}\NormalTok{),}
+    \AttributeTok{cost\_burden\_category =} \FunctionTok{case\_when}\NormalTok{(}
+      \FunctionTok{is.na}\NormalTok{(housing\_cost\_burden) }\SpecialCharTok{\textasciitilde{}} \StringTok{"Missing"}\NormalTok{,}
+\NormalTok{      housing\_cost\_burden }\SpecialCharTok{\textless{}} \FloatTok{0.3} \SpecialCharTok{\textasciitilde{}} \StringTok{"Affordable (\textless{}30\%)"}\NormalTok{,}
+\NormalTok{      housing\_cost\_burden }\SpecialCharTok{\textless{}} \FloatTok{0.5} \SpecialCharTok{\textasciitilde{}} \StringTok{"Moderate (30{-}50\%)"}\NormalTok{,}
+\NormalTok{      housing\_cost\_burden }\SpecialCharTok{\textgreater{}=} \FloatTok{0.5} \SpecialCharTok{\textasciitilde{}} \StringTok{"Severe (\textgreater{}50\%)"}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \StringTok{"Unknown"}
+\NormalTok{    )}
+\NormalTok{  )}
+
+\FunctionTok{freq}\NormalTok{(data\_clean}\SpecialCharTok{$}\NormalTok{cost\_burden\_category)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                   frequency proportion
+## Affordable (<30%)    575793      0.052
+## Missing               82723      0.007
+## Moderate (30-50%)      9584      0.001
+## Severe (>50%)      10435279      0.940
+\end{verbatim}
+
+\paragraph{8. Household size}\label{household-size}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_clean }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{household\_size\_group =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{      numprec }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \StringTok{"1 person"}\NormalTok{,}
+\NormalTok{      numprec }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \StringTok{"2 people"}\NormalTok{,}
+\NormalTok{      numprec }\SpecialCharTok{\textgreater{}=} \DecValTok{3} \SpecialCharTok{\&}\NormalTok{ numprec }\SpecialCharTok{\textless{}=} \DecValTok{4} \SpecialCharTok{\textasciitilde{}} \StringTok{"3{-}4 people"}\NormalTok{,}
+\NormalTok{      numprec }\SpecialCharTok{\textgreater{}=} \DecValTok{5} \SpecialCharTok{\textasciitilde{}} \StringTok{"5+ people"}\NormalTok{,}
+      \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \StringTok{"Unknown"}
+\NormalTok{  )}
+\NormalTok{  )}
+\FunctionTok{freq}\NormalTok{(data\_clean}\SpecialCharTok{$}\NormalTok{household\_size\_group)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##            frequency proportion
+## 1 person     1440351      0.130
+## 2 people     2556882      0.230
+## 3-4 people   4191828      0.378
+## 5+ people    2914318      0.262
+\end{verbatim}
+
+\subsection{VI. Export Cleaned Files}\label{vi.-export-cleaned-files}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# use readr {-} faster than write.csv}
+\FunctionTok{saveRDS}\NormalTok{(data\_clean, }\StringTok{"full\_clean.rds"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{VII. Create Household-Level
+Subset}\label{vii.-create-household-level-subset}
+
+Notes:
+
+\begin{itemize}
+\item
+  Aggregate household-level data
+\item
+  Keep only household heads
+\item ~
+  \section{as recommended by IPUMS: users should also be sure to select
+  one person (e.g., PERNUM = 1) to represent the entire
+  household.}\label{as-recommended-by-ipums-users-should-also-be-sure-to-select-one-person-e.g.-pernum-1-to-represent-the-entire-household.}
+\item
+  q* variables are data quality flags that indicate whether a value was
+  allocated (imputed) by the Census Bureau
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{households }\OtherTok{\textless{}{-}}\NormalTok{ data\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(pernum }\SpecialCharTok{==} \DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  
+  \FunctionTok{select}\NormalTok{(}
+    \AttributeTok{household\_id =}\NormalTok{ serial,}
+\NormalTok{    pernum,}
+    \AttributeTok{weight\_household =}\NormalTok{ hhwt,}
+\NormalTok{    year, }
+\NormalTok{    multyear,}
+\NormalTok{    race\_ethnicity\_head,}
+\NormalTok{    veteran\_head,}
+\NormalTok{    disability\_head,}
+\NormalTok{    sex\_head,}
+\NormalTok{    age\_head,}
+\NormalTok{    age\_head\_group,}
+    \AttributeTok{income =}\NormalTok{ hhincome\_cpiu\_2010,}
+\NormalTok{    income\_bracket,}
+    \AttributeTok{housing\_cost =}\NormalTok{ owncost\_cpiu\_2010,}
+\NormalTok{    housing\_cost\_burden,}
+\NormalTok{    cost\_burden\_category,}
+\NormalTok{    tenure\_detailed,}
+\NormalTok{    tenure\_general,}
+    \AttributeTok{met\_area =}\NormalTok{ met2013, }
+\NormalTok{    puma, }
+\NormalTok{    cluster,}
+\NormalTok{    strata,}
+\NormalTok{    gq,}
+\NormalTok{    qhhincome, }
+\NormalTok{    qowncost, }
+\NormalTok{    qownersh,}
+\NormalTok{  )}\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{any\_imputed =}\NormalTok{ qownersh }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{|}\NormalTok{ qhhincome }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{|}\NormalTok{ qowncost }\SpecialCharTok{==} \DecValTok{1} 
+\NormalTok{  )}
+
+\FunctionTok{saveRDS}\NormalTok{(households, }\StringTok{"household\_clean.rds"}\NormalTok{)}
+
+\FunctionTok{summary}\NormalTok{(households)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   household_id         pernum  weight_household      year         multyear   
+##  Min.   : 331646   Min.   :1   Min.   :  1.00   Min.   :2018   Min.   :2014  
+##  1st Qu.: 524508   1st Qu.:1   1st Qu.: 10.00   1st Qu.:2019   1st Qu.:2017  
+##  Median : 709035   Median :1   Median : 14.00   Median :2021   Median :2018  
+##  Mean   : 709154   Mean   :1   Mean   : 18.99   Mean   :2020   Mean   :2019  
+##  3rd Qu.: 893561   3rd Qu.:1   3rd Qu.: 22.00   3rd Qu.:2022   3rd Qu.:2020  
+##  Max.   :1097044   Max.   :1   Max.   :645.00   Max.   :2023   Max.   :2023  
+##                                                                              
+##  race_ethnicity_head veteran_head       disability_head       sex_head     
+##  Length:4428640      Length:4428640     Length:4428640     Min.   :1.0     
+##  Class :character    Class :character   Class :character   1st Qu.:1.0     
+##  Mode  :character    Mode  :character   Mode  :character   Median :1.0     
+##                                                            Mean   :1.5     
+##                                                            3rd Qu.:2.0     
+##                                                            Max.   :2.0     
+##                                                            NA's   :506237  
+##     age_head      age_head_group      income          income_bracket    
+##  Min.   :15.0     0-17 :  22579   Min.   :   -14451   Length:4428640    
+##  1st Qu.:40.0     18-34: 831395   1st Qu.:    36879   Class :character  
+##  Median :54.0     35-54:1487550   Median :    78078   Mode  :character  
+##  Mean   :53.9     55-74:1535757   Mean   :114394508                     
+##  3rd Qu.:67.0     75+  : 551169   3rd Qu.:   159928                     
+##  Max.   :94.0     NA's :    190   Max.   :999999999                     
+##  NA's   :506237                                                         
+##   housing_cost     housing_cost_burden cost_burden_category tenure_detailed   
+##  Min.   :      0   Min.   :      0     Length:4428640       Length:4428640    
+##  1st Qu.:4600875   1st Qu.:     21     Class :character     Class :character  
+##  Median :9201908   Median :     77     Mode  :character     Mode  :character  
+##  Mean   :7272302   Mean   :    641                                            
+##  3rd Qu.:9999999   3rd Qu.:    196                                            
+##  Max.   :9999999   Max.   :9999999                                            
+##                    NA's   :47760                                              
+##  tenure_general        met_area          puma          cluster         
+##  Length:4428640     Min.   :    0   Min.   :  101   Min.   :2.018e+12  
+##  Class :character   1st Qu.:31080   1st Qu.: 3723   1st Qu.:2.019e+12  
+##  Mode  :character   Median :40140   Median : 5910   Median :2.021e+12  
+##                     Mean   :35302   Mean   : 5488   Mean   :2.021e+12  
+##                     3rd Qu.:41860   3rd Qu.: 7317   3rd Qu.:2.022e+12  
+##                     Max.   :49700   Max.   :11302   Max.   :2.023e+12  
+##                                                                        
+##      strata              gq          qhhincome        qowncost     
+##  Min.   :  10106   Min.   :1.000   Min.   :0.000   Min.   :0.0000  
+##  1st Qu.: 372306   1st Qu.:1.000   1st Qu.:0.000   1st Qu.:0.0000  
+##  Median : 591006   Median :1.000   Median :0.000   Median :0.0000  
+##  Mean   : 548844   Mean   :1.291   Mean   :1.294   Mean   :0.6146  
+##  3rd Qu.: 731706   3rd Qu.:1.000   3rd Qu.:4.000   3rd Qu.:0.0000  
+##  Max.   :1130206   Max.   :5.000   Max.   :4.000   Max.   :4.0000  
+##                                                                    
+##     qownersh       any_imputed    
+##  Min.   :0.00000   Mode :logical  
+##  1st Qu.:0.00000   FALSE:4428640  
+##  Median :0.00000                  
+##  Mean   :0.05863                  
+##  3rd Qu.:0.00000                  
+##  Max.   :4.00000                  
+## 
+\end{verbatim}
+
+\subsubsection{A. HH level Checks}\label{a.-hh-level-checks}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{households }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{count}\NormalTok{(race\_ethnicity\_head, tenure\_detailed, }\AttributeTok{wt =}\NormalTok{ weight\_household)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 29 x 3
+##    race_ethnicity_head                 tenure_detailed               n
+##    <chr>                               <chr>                     <dbl>
+##  1 Hispanic                            Owned - Free and Clear  2737058
+##  2 Hispanic                            Owned - With Mortgage   7722616
+##  3 Hispanic                            Rented - Cash Rent     12841270
+##  4 Hispanic                            Rented - No Cash Rent    317168
+##  5 Non-Hispanic Asian/Pacific Islander Owned - Free and Clear  2027223
+##  6 Non-Hispanic Asian/Pacific Islander Owned - With Mortgage   4753062
+##  7 Non-Hispanic Asian/Pacific Islander Rented - Cash Rent      4403789
+##  8 Non-Hispanic Asian/Pacific Islander Rented - No Cash Rent    175352
+##  9 Non-Hispanic Black                  Owned - Free and Clear   352456
+## 10 Non-Hispanic Black                  Owned - With Mortgage   1312858
+## # i 19 more rows
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{households }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{count}\NormalTok{(veteran\_head, cost\_burden\_category, }\AttributeTok{wt =}\NormalTok{ weight\_household)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 12 x 3
+##    veteran_head cost_burden_category        n
+##    <chr>        <chr>                   <dbl>
+##  1 Non-veteran  Affordable (<30%)       42256
+##  2 Non-veteran  Missing                 44632
+##  3 Non-veteran  Moderate (30-50%)        3358
+##  4 Non-veteran  Severe (>50%)         5396526
+##  5 Unknown      Affordable (<30%)     5010485
+##  6 Veteran      Affordable (<30%)      411160
+##  7 Veteran      Missing               1048293
+##  8 Veteran      Moderate (30-50%)       50658
+##  9 Veteran      Severe (>50%)        72076451
+## 10 <NA>         Affordable (<30%)         141
+## 11 <NA>         Missing                  2560
+## 12 <NA>         Severe (>50%)            5055
+\end{verbatim}
+
+\end{document}

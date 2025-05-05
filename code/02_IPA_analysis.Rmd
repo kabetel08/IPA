@@ -1004,7 +1004,7 @@ knitr::kable(summary_stats, caption = "Weighted Averages of Household Income and
 # TODO: add summary table of income and owncost
 ```
 
-## VIII. Income Trends by Ownership Status (LARA)
+## IV. Income Trends by Ownership Status
 
 ### A. Summary Table: Average Income by Tenure and multyear (Lara. RR)
 ```{r income-summary-table}
@@ -1019,93 +1019,173 @@ income_summary <- data %>%
 print(income_summary)
 ```
 
-### B. Line Plot: Average Income Over Time by Tenure (Lara. RR )
+### B. Line Plot: Average Income Over Time by Tenure (Lara. Updated)
 ```{r income-line-plot}
+# ensure income is numeric
 data$income <- as.numeric(as.character(data$income))
 
+# filter for the correct tenure labels
 data_filtered <- data %>%
-  filter(tenure_general %in% c("Owned", "Rented")) %>%
+  filter(tenure_general %in% c("Owner", "Renter")) %>%
   group_by(multyear, tenure_general) %>%
-  summarise(mean_income = mean(income, na.rm = TRUE), .groups = "drop")
+  summarise(
+    mean_income   = mean(income, na.rm = TRUE),
+    .groups       = "drop"
+  )
 
-ggplot(data_filtered, aes(x = multyear, y = mean_income, color = tenure_general)) +
-  # Highlight 2018-2024 period with a shaded region (behind everything)
-  geom_rect(aes(xmin = 2018, xmax = 2024, ymin = -Inf, ymax = Inf), fill = "lightyellow", alpha = 0.1) +
-  # Add a grey dotted line at the multyear 2020 (behind the trend lines)
-  geom_vline(xintercept = 2020, linetype = "dotted", color = "lightgray", size = 1) +
-  # Dotted line for 2020
-  # Add the trend lines on top
-  geom_line(linewidth = 1) +  # Use linewidth instead of size for trend lines
-  labs(x = "multyear", y = "Average Income", title = "Avg. Income, Owners vs. Renters (2014 - 2023)", color = " ") + # Customize the legend title
-  scale_color_manual(values = c("Owned" = "blue", "Rented" = "red")) +
-  theme_minimal()
+#checking sample size weighted and unweighted
+overall_counts_tenure <- data %>%
+  # same filters as for the plot
+  filter(tenure_general %in% c("Owner", "Renter")) %>%
+  summarise(
+    unweighted_n = n(),
+    weighted_n   = sum(weight_household_norm, na.rm = TRUE),
+    .groups      = "drop"
+  )
+print(overall_counts_tenure)
+
+# weighted mean by year & tenure
+data_filtered <- data %>%
+  filter(tenure_general %in% c("Owner","Renter")) %>%
+  group_by(multyear, tenure_general) %>%
+  summarise(
+    mean_income = weighted.mean(income, weight_household_norm, na.rm=TRUE), #(Karla) now that i updated to weight_household_norm im getting a weird # for weighted n
+    .groups     = "drop"
+  )
+
+# plot
+ggplot(data_filtered, aes(multyear, mean_income, colour = tenure_general)) +
+  geom_rect(aes(xmin = 2018, xmax = 2023, ymin = -Inf, ymax = Inf),
+            fill = "lightyellow", alpha = 0.1, color = NA) +  # Yellow region behind
+  geom_vline(xintercept = 2020,
+             linetype   = "dotted",
+             colour     = "lightgray",
+             size       = 1) +                                # pandemic marker
+  geom_line(linewidth = 1) +
+  
+  ## axes
+  scale_x_continuous(
+    breaks = seq(2014, 2023, 2),
+    limits = c(2014, 2023)) +
+  scale_y_continuous(
+    limits = c(30000, 130000),
+    breaks = seq(30000, 130000, 20000),
+    labels = function(x) x / 1000                       # show 40, 60, …
+  ) +
+  
+  scale_color_manual(
+    values = c("Owner" = "blue", "Renter" = "red"),
+    name   = " "
+  ) +
+  labs(
+    x     = "Year",
+    y     = "Average Income (thousands of dollars)",
+    title = "Avg. Income, Owners vs. Renters (2014 – 2023)"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position    = "right",
+    plot.title         = element_text(hjust = 0.5)     # 0 = left, 0.5 = centre, 1 = right
+  )
 ```
+##(Lara. Updated)
+```{r}
+#Getting income stats for report analysis prose
 
+# median income and percent change 
+median_stats <- data %>%
+  filter(tenure_general %in% c("Owner","Renter"),
+         multyear %in% c(2014, 2023)) %>%
+  group_by(tenure_general, multyear) %>%
+  summarise(
+    med = wtd.quantile(income, weight_household, probs = 0.5, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  pivot_wider(
+    names_from   = multyear,
+    names_prefix = "med",
+    values_from  = med
+  ) %>%
+  mutate(
+    pct = 100 * (med2023 - med2014) / med2014
+  )
 
-## IX.  Sex Trends by Homeownership Trends =
+median_stats
+
+#overall income and pct change
+overall_pct <- data %>%
+  filter(multyear %in% c(2014, 2023)) %>%
+  group_by(multyear) %>%
+  summarise(
+    med = wtd.quantile(income, weight_household, probs = 0.5, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  summarise(
+    pct_gain = 100 * (med[multyear == 2023] - med[multyear == 2014]) / med[multyear == 2014]
+  ) %>%
+  pull(pct_gain)
+
+overall_pct
+```
+## V. Homeownership Trends by Sex
+
 
 ### A. Frequency and Summary Statistics (Lara. RR)
 ```{r freq-summary}
-freq(data$sex_head)
+freq(data$gender_head)
 freq(data$tenure_general)
 freq(data$cost_burden_category)
 summary(data$housing_cost_burden)
 summary(data$housing_cost)
 ```
 
-### B. Homeownership Summary by Sex (Lara. RR. TO REVISE)
+### B. Homeownership Summary by Sex (Lara. Updated)
 ```{r homeownership-rate-by-multyear-and-sex_head}
 homeownership <- data %>%
-  filter(sex_head %in% c("Female", "Male"),
-         tenure_general %in% c("Owned", "Rented")) %>%
-  group_by(multyear, sex_head) %>%
-  summarise(
-    total = n(),
-    owned = sum(tenure_general == "Owned"),
-    prop_owned = owned / total,  # proportion owned (0 to 1)
-    .groups = "drop"
+  filter(
+    gender_head  %in% c("Female", "Male"),
+    tenure_general %in% c("Owner", "Renter")
   ) %>%
-  mutate(prop_owned_pct = prop_owned * 100)
+  group_by(multyear, gender_head) %>%
+  summarise(
+    prop_owned      = weighted.mean(tenure_general == "Owner",
+                                    weight_household,
+                                    na.rm = TRUE),
+    prop_owned_pct  = prop_owned * 100,
+    .groups         = "drop"
+  )
 
 head(homeownership)
+
+#checking sample sizes
+sex_sample_sizes <- data %>%
+  filter(
+    gender_head   %in% c("Female", "Male"),
+    tenure_general %in% c("Owner", "Renter")
+  ) %>%
+  summarise(
+    unweighted_n = n(),
+    weighted_n   = sum(weight_household, na.rm = TRUE),
+    .groups      = "drop"
+  )
+
+print(sex_sample_sizes)
 ```
 
-## (Lara. RR)
-```{r homeownership-summary}
-homeownership_summary <- homeownership %>%
-  group_by(sex_head) %>%
-  summarise(min_multyear = min(multyear),
-            max_multyear = max(multyear),
-            n_observations = n(),
-            min_rate = min(prop_owned_pct, na.rm = TRUE),
-            max_rate = max(prop_owned_pct, na.rm = TRUE),
-            mean_rate = mean(prop_owned_pct, na.rm = TRUE),
-            median_rate = median(prop_owned_pct, na.rm = TRUE),
-            sd_rate = sd(prop_owned_pct, na.rm = TRUE),
-            .groups = "drop")
+### C. Trend Plot: Homeownership by Sex (Lara. Updated)
 
-print(homeownership_summary)
-```
-
-### C. Trend Plot: Homeownership by Sex (Lara. RR)
-```{r homeownership-trends a}
-# Compute y-range from the data and expand it slightly
-yrange <- range(homeownership$prop_owned_pct, na.rm = TRUE)
-# Add padding of 5 (you can adjust this as needed)
-yrange_expanded <- c(yrange[1] - 5, yrange[2] + 5)
-
-
+```{r}
 # Plot the trends with the highlight and dotted vertical line.
-ggplot(homeownership, aes(x = multyear, y = prop_owned_pct, color = sex_head, linetype = sex_head)) +
+ggplot(homeownership, aes(x = multyear, y = prop_owned_pct, color = gender_head, linetype = gender_head)) +
    # Highlight 2018-2024 period with a shaded region (behind everything)
- scale_y_continuous(limits = c(50, 70)) +
+ scale_y_continuous(limits = c(45, 65)) +
   geom_rect(aes(xmin = 2018, xmax = 2024, ymin = -Inf, ymax = Inf), 
             fill = "lightyellow", alpha = 0.1, color = NA) +  # Yellow region behind
   # Add a grey dotted vertical line at 2020.
   geom_vline(xintercept = 2020, linetype = "dotted", color = "lightgray", size = 1) +
   geom_line(linewidth = 1.2) +
   geom_point() +
-  labs(x = "multyear",
+  labs(x = "Year",
        y = "Homeownership Rate (%)",
        title = "Homeownership Trends by Sex of Head of Household (2014-2024)",
        color = "Sex of HH",
@@ -1116,112 +1196,176 @@ ggplot(homeownership, aes(x = multyear, y = prop_owned_pct, color = sex_head, li
   theme(legend.position = "right")
 ```
 
-## X. Housing Cost Burden Trends by Sex
+## VI. Housing Cost Burden Trends by Sex (Lara. Updated)
 
-### A. Summary Table for Cost Burden (Owners) (Lara. RR TO REVISE )
-```{r}
-data %>%
-  filter(sex_head %in% c("Female", "Male"),
-         tenure_general %in% c("Owned", "Rented")) %>%
-  mutate(group = paste(sex_head, tenure_general)) %>%
-  group_by(group) %>%
-  summarise(
-    total = n(),
-    non_missing = sum(!is.na(housing_cost_burden)),
-    mean_burden = mean(housing_cost_burden, na.rm = TRUE),
-    median_burden = median(housing_cost_burden, na.rm = TRUE)
+```{r homeownership-trends a}
+#correcting housing cost variable by annualizing monthly cost
+# coerce & drop IPUMS top-codes and compute annualized housing cost burden
+data <- data %>%
+  mutate(
+    income       = as.numeric(income),
+    housing_cost = as.numeric(housing_cost),
+    income       = if_else(income >= 9999999, NA_real_, income),
+    housing_cost = if_else(housing_cost >= 99999,   NA_real_, housing_cost),
+    housing_cost_burden = if_else(
+      income > 0,
+      housing_cost * 12 / income,
+      NA_real_
+    )
   )
 
-```
-
-### (Lara. RR TO REVISE)
-```{r}
-summary_owned <- data %>%
-  # Keep only rows for Female or Male, tenure = Owned, and valid non-NA housing cost burden
-  filter(sex_head %in% c("Female", "Male"),
-         tenure_general == "Owned",
-         !is.na(housing_cost_burden)) %>%
-  # Ensure housing_cost_burden is numeric
-  mutate(housing_cost_burden = as.numeric(as.character(housing_cost_burden))) %>%
-  # Create a grouping variable that labels each row as either "Female Owned" or "Male Owned"
-  mutate(group = paste(sex_head, tenure_general)) %>%
-  group_by(group) %>%
+# sample size check for mortgage‐holders
+overall_counts_gender <- data %>%
+  filter(
+    !is.na(housing_cost_burden),
+    gender_head    %in% c("Female","Male"),
+    tenure_detailed == "Owned - With Mortgage or Loan"
+  ) %>%
   summarise(
-    min_multyear       = min(multyear, na.rm = TRUE),
-    max_multyear       = max(multyear, na.rm = TRUE),
-    n_observations = n(),
-    min_burden     = min(housing_cost_burden, na.rm = TRUE),
-    max_burden     = max(housing_cost_burden, na.rm = TRUE),
-    mean_burden    = mean(housing_cost_burden, na.rm = TRUE),
-    median_burden  = median(housing_cost_burden, na.rm = TRUE),
-    sd_burden      = sd(housing_cost_burden, na.rm = TRUE),
-    .groups        = "drop"
+    unweighted_n = n(),
+    weighted_n   = sum(weight_household, na.rm = TRUE),
+    .groups      = "drop"
+  )
+print(overall_counts_gender)
+
+# compute median burden trends for mortgage‐holders 
+data_gender_burden <- data %>%
+  filter(
+    tenure_detailed == "Owned - With Mortgage or Loan",
+    !is.na(housing_cost_burden),
+    gender_head %in% c("Female","Male")
+  ) %>%
+  mutate(group = paste(gender_head, "Mortgage Holder")) %>%
+  group_by(multyear, group) %>%
+  summarise(
+    median_cost_burden = wtd.quantile(housing_cost_burden * 100,
+                                      weight_household,
+                                      probs = 0.5,
+                                      na.rm = TRUE),
+    .groups = "drop"
   )
 
-# Print the table to see your summary stats
-print(summary_owned)
-```
-
-### B. Plot: Average Housing Cost Burden (Owners) (Lara. RR)
-```{r}
-# 1. numeric burden
-data$housing_cost_burden <- as.numeric(as.character(data$housing_cost_burden))
-
-# 2. keep valid rows & only Owned
-data_grouped <- data %>% 
-  filter(!is.na(housing_cost_burden),
-         between(housing_cost_burden, 0, 1),
-         sex_head %in% c("Female", "Male"),
-         tenure_general == "Owned") %>%            # only owners
-  mutate(group = paste(sex_head, "Owned")) %>%     # “Female Owned”, “Male Owned”
-  group_by(multyear, group) %>% 
-  summarise(mean_cost_burden = mean(housing_cost_burden) * 1000,
-            .groups = "drop")
-
-# 3. x-position for threshold labels
-x_label <- min(data_grouped$multyear) + 
-           (max(data_grouped$multyear) - min(data_grouped$multyear)) / 4
-
-# 4. y-axis transform: linear ≤ 50, compressed above 50
+# annotation x-position & compressed‐scale
+x_label <- min(data_gender_burden$multyear) + diff(range(data_gender_burden$multyear)) / 4
 compress_trans <- trans_new(
   "compress",
   transform = function(x) ifelse(x <= 50, x, 50 + (x - 50) / 10),
   inverse   = function(y) ifelse(y <= 50, y, (y - 50) * 10 + 50)
 )
 
-# 5. plot
-ggplot(data_grouped,
-       aes(multyear, mean_cost_burden, colour = group, linetype = group)) +
-  annotate("rect", xmin = 2018, xmax = 2024, ymin = 0, ymax = 100,
-           fill = "lightyellow", alpha = .1) +
-  geom_vline(xintercept = 2020, linetype = "dotted",
-             colour = "lightgray", size = 1) +
-  geom_hline(yintercept = 30, colour = "green")  +
-  geom_hline(yintercept = 50, colour = "orange") +
-  geom_hline(yintercept = 100, colour = "red")   +
-  annotate("text", x = x_label, y = 30,
-           label = "Affordable (<30%)", colour = "green",  vjust = -0.4) +
-  annotate("text", x = x_label, y = 50,
-           label = "Moderate (30-50%)", colour = "orange", vjust = -0.4) +
-  annotate("text", x = x_label, y = 100,
-           label = "Severe (>50%)",     colour = "red",    vjust = -0.4) +
+# plot using the weighted median
+ggplot(data_gender_burden,
+       aes(multyear, median_cost_burden, colour = group, linetype = group)) +
+  geom_rect(aes(xmin = 2018, xmax = 2024, ymin = -Inf, ymax = Inf), 
+            fill = "lightyellow", alpha = 0.1, color = NA) +  # Yellow region behind
+  geom_vline(xintercept = 2020, linetype = "dotted", colour = "lightgray", size = 1) +
+  geom_hline(yintercept = c(30, 50, 100), colour = c("green", "orange", "red")) +
+  annotate("text", x = x_label, y = c(30, 50, 100),
+           label  = c("Affordable (<30%)", "Moderate (30–50%)", "Severe (>50%)"),
+           colour = c("green", "orange", "red"), vjust = -0.4) +
   geom_line(linewidth = 1) +
   geom_point() +
-  scale_y_continuous(trans = compress_trans,
-                     name  = "Average Housing Cost Burden (%)") +
-  scale_colour_manual(values = c("Female Owned" = "purple",
-                                 "Male Owned"   = "orange")) +   # typo fixed
-  scale_linetype_manual(values = c("Female Owned" = "solid",
-                                   "Male Owned"   = "solid")) +  # typo fixed
-  labs(title   = "Homeowner Housing Cost Burden Trends by Sex (2014-2024)",
-       x       = "multyear",
-       colour  = "Group",
-       linetype = "Group") +
+  scale_y_continuous(
+    trans  = compress_trans,
+    name   = "Median Housing Cost Burden (%)",
+    limits = c(0, NA)
+  ) +
+  scale_colour_manual(values = c(
+    "Female Mortgage Holder" = "purple",
+    "Male Mortgage Holder"   = "orange"
+  )) +
+  scale_linetype_manual(values = c(
+    "Female Mortgage Holder" = "solid",
+    "Male Mortgage Holder"   = "solid"
+  )) +
+  labs(
+    title    = "Median Housing Cost Burden for Mortgage Holders by Sex (2014–2023)",
+    x        = "Year",
+    colour   = "Group",
+    linetype = "Group"
+  ) +
   theme_minimal() +
   theme(legend.position = "right")
-
 ```
+##(Lara. Updated)
+```{r}
+# compute average burden trends for mortgage holders
+data_gender_burden_mean <- data %>%
+  filter(
+    tenure_detailed == "Owned - With Mortgage or Loan",
+    !is.na(housing_cost_burden)
+  ) %>%
+  mutate(
+    group       = paste(gender_head, "Mortgage Holder"),
+    burden_pct  = housing_cost_burden * 100        # capped at 100%
+  ) %>%
+  group_by(multyear, group) %>%
+  summarise(
+    mean_cost_burden = weighted.mean(burden_pct, weight_household, na.rm = TRUE),
+    .groups          = "drop"
+  )
 
+# position for annotations and compressed scale (same as before)
+x_label <- min(data_gender_burden_mean$multyear) + diff(range(data_gender_burden_mean$multyear)) / 4
+compress_trans <- trans_new(
+  "compress",
+  transform = function(x) ifelse(x <= 50, x, 50 + (x - 50) / 10),
+  inverse   = function(y) ifelse(y <= 50, y, (y - 50) * 10 + 50)
+)
+
+# plot weighted‐mean burden
+ggplot(data_gender_burden_mean,
+       aes(multyear, mean_cost_burden, colour = group, linetype = group)) +
+  annotate("rect", xmin = 2018, xmax = 2023, ymin = -Inf, ymax = Inf,
+           fill = "lightyellow", alpha = 0.1) +
+  geom_vline(xintercept = 2020, linetype = "dotted", colour = "lightgray", size = 1) +
+  geom_hline(yintercept = c(30, 50, 100), colour = c("green", "orange", "red")) +
+  annotate("text", x = x_label, y = c(30, 50, 100),
+           label  = c("Affordable (<30%)","Moderate (30–50%)","Severe (>50%)"),
+           colour = c("green","orange","red"), vjust = -0.4) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  scale_y_continuous(
+    trans  = compress_trans,
+    name   = "Average Housing Cost Burden (%)",
+    limits = c(0, NA)
+  ) +
+  scale_colour_manual(values = c(
+    "Female Mortgage Holder" = "purple",
+    "Male Mortgage Holder"   = "orange"
+  )) +
+  scale_linetype_manual(values = c(
+    "Female Mortgage Holder" = "solid",
+    "Male Mortgage Holder"   = "solid"
+  )) +
+  labs(
+    title    = "Mean Housing Cost Burden for Mortgage Holders by Gender (2014–2023)",
+    x        = "Year",
+    colour   = "Group",
+    linetype = "Group"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "right")
+```
+### A. Summary Table for Cost Burden (Owners) (Lara. Updated )
+```{r}
+data %>%
+  filter(
+    tenure_detailed == "Owned - With Mortgage or Loan",
+    !is.na(housing_cost_burden)
+  ) %>%
+  group_by(multyear) %>%
+  summarise(
+    n             = n(),
+    weighted_n    = sum(weight_household, na.rm=TRUE),
+    mean_burden   = weighted.mean(housing_cost_burden, weight_household, na.rm=TRUE),
+    median_burden = wtd.quantile(housing_cost_burden, weight_household, probs=0.5),
+    p90_burden    = quantile(housing_cost_burden, 0.9, na.rm=TRUE),
+    max_burden    = max(housing_cost_burden, na.rm=TRUE),
+    .groups       = "drop"
+  ) %>%
+  print(n=Inf)
+```
 
 ## XI. Ownership by Age and Race (MEG)
 

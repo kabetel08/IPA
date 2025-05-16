@@ -1686,8 +1686,8 @@ library(dplyr)</code></pre>
 <pre class="r"><code>rm(list = ls(all.names = TRUE))
 gc()</code></pre>
 <pre><code>##           used  (Mb) gc trigger  (Mb) limit (Mb) max used  (Mb)
-## Ncells 2631292 140.6    4637174 247.7         NA  4637174 247.7
-## Vcells 4473134  34.2   10146329  77.5      16384  7940119  60.6</code></pre>
+## Ncells 2631264 140.6    4642587 248.0         NA  4642587 248.0
+## Vcells 4473070  34.2   10146329  77.5      16384  7946786  60.7</code></pre>
 </div>
 <div id="c.-custom-functions" class="section level3">
 <h3>C. Custom Functions</h3>
@@ -1804,21 +1804,18 @@ names(data) &lt;- tolower(names(data))</code></pre>
 Income (AMI) consistently across time, we pooled data from multiple
 overlapping 5-year ACS samples. Because these samples share years (e.g.,
 both the 2015–2019 and 2016–2020 files include 2016–2019), certain years
-are overrepresented in the combined dataset.</p>
-<p>We want each year (e.g., 2015, 2016…) in your pooled dataset to
+are over represented in the combined data set.</p>
+<p>We want each year (e.g., 2015, 2016…) in our pooled data set to
 contribute equally, regardless of (1) how many households came from that
 year and (2) how large the total weight from that year was</p>
 <p>To address this, we normalized household weights within each
 constructed year (multyear) so that each year contributes equally to our
 weighted median income estimates. This prevents years with greater
 sample overlap from disproportionately influencing AMI calculations.</p>
-<p>How?</p>
-<ol style="list-style-type: decimal">
-<li>Sum up all the original household weights in that year</li>
-<li>For every household in XXXX year, divide their original weight by
-that year’s total</li>
-<li>This makes the sum of normalized weights for XXX equal 1.</li>
-</ol>
+<p>How? 1. Sum up all the original household weights in that year 2. For
+every household in XXXX year, divide their original weight by that
+year’s total 3. This makes the sum of normalized weights for XXX equal
+1.</p>
 <p>So if a household originally had a weight of 34, and the total weight
 for XXXX year was 100, then that means that this household now
 represents 34% of “one unit of influence” for 2016.</p>
@@ -1826,8 +1823,8 @@ represents 34% of “one unit of influence” for 2016.</p>
 <h4>Diagnostic: Check how many rows &amp; total weight per multyear</h4>
 <p>Goal: Because we are using overlapping 5-year ACS samples (e.g.,
 2014–2018, 2015–2019, etc.), we expect that some multyear values will be
-overrepresented in terms of both the number of households and the total
-household weight. Specifically, years like 2016–2019, which appear in
+over represented in terms of both the number of households and the total
+household weight.Specifically, years like 2016–2019, which appear in
 multiple 5-year samples, will have larger sample sizes and higher
 aggregate weights, simply due to duplication across files — not because
 of actual population differences.</p>
@@ -2216,7 +2213,7 @@ recommended above hhwt/100.</p></li>
 identifies the person within the household</p></li>
 </ul>
 <p>Quick income/cost var checks</p>
-<pre class="r"><code>#income
+<pre class="r"><code># A. Income
  summary(data$hhincome_cpiu_2010)</code></pre>
 <pre><code>##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
 ##    -14451     42616     81801  45694443    145667 999999999</code></pre>
@@ -2224,15 +2221,13 @@ identifies the person within the household</p></li>
 # - These are meant to flag certain thresholds, not indicate actual negative income
 # - We will handle them as missing values, similar to 99999999 code 
 
-
 summary(ifelse(data$hhincome_cpiu_2010 &lt; 0 | data$hhincome_cpiu_2010 == 9999999,
                NA, data$hhincome_cpiu_2010))</code></pre>
 <pre><code>##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max.      NA&#39;s 
 ##         0     42617     81838  45710986    145709 999999999      4018</code></pre>
-<pre class="r"><code># Seems unlikely that that there are so many 999999999 remaining. likley an encoding issue.  
+<pre class="r"><code># Seems unlikely that that there are so many 999999999 remaining. likely an encoding issue. Will traat these as NA too 
 
-
-# own cost 
+# B. Own cost 
  summary(data$owncost_cpiu_2010)</code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##       0    1395    3049 4069624 9999999 9999999</code></pre>
@@ -2676,16 +2671,16 @@ freq(data_clean$female_head)</code></pre>
 summary(data_clean$percent_ami)</code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s 
 ##     0.0     0.6     1.0     1.3     1.7    38.8  510255</code></pre>
-<pre class="r"><code># Min   0.0 Possible true zero or error 
-# 1st Quartile  0.6 25% of households earn ≤ 60% of AMI — aligns with typical low-income cutoffs
-# Median    1.0 50% earn around the AMI — good sign of centrality
-# Mean  1.3 Slightly skewed right (expected) but no longer extreme
-# 3rd Quartile  1.7 75% earn up to 170% AMI — consistent with moderate-income brackets
-# Max   38.8    Still high. Likely just a few remaining high-income outliers
-# NA&#39;s  510,255 Not unexpected if missing income or AMI values were handled conservatively</code></pre>
+<pre class="r"><code># Min   0.0 :   Possible true zero or error 
+# 1st Quartile: 0.6 25% of households earn ≤ 60% of AMI — aligns with typical low-income cutoffs
+# Median :  1.0 50% earn around the AMI — good sign of centrality
+# Mean: 1.3 Slightly skewed right (expected) but no longer extreme
+# 3rd Quartile :    1.7 75% earn up to 170% AMI — consistent with moderate-income brackets
+# Max   38.8    :Still high. Likely just a few remaining high-income outliers
+# NA&#39;s  : 510,255   Not unexpected if missing income or AMI values were handled conservatively</code></pre>
 </div>
 <div id="create-ami-categories" class="section level4">
-<h4>Create ami categories</h4>
+<h4>Create AMI categories</h4>
 <pre class="r"><code>data_clean &lt;- data_clean %&gt;%
   mutate(
     ami_category = case_when(
@@ -2703,7 +2698,7 @@ freq(data_clean$ami_category)</code></pre>
 ## 50–79% AMI    1742392      0.157
 ## 80–120% AMI   2127576      0.192
 ## &lt;NA&gt;           510255      0.046</code></pre>
-<pre class="r"><code># this distribution looks reasonable
+<pre class="r"><code># This distribution looks reasonable
 # Having ~40% of households above 120% AMI is expected in many areas, especially urban or high-cost regions.
 # A notable share below 50% AMI (~20%) also tracks with national and state-level poverty/low-income rates.</code></pre>
 </div>
@@ -2711,7 +2706,8 @@ freq(data_clean$ami_category)</code></pre>
 <h4>Housing Cost Burden Categories</h4>
 <pre class="r"><code>data_clean  &lt;- data_clean%&gt;%
   mutate(
-    housing_cost_burden =  housing_cost /income,
+    #correcting housing cost variable by annualizing monthly cost
+    housing_cost_burden =  (housing_cost * 12) / income,
     housing_cost_burden = ifelse(housing_cost_burden &lt; 0 | is.infinite(housing_cost_burden), NA, housing_cost_burden),
     overburdened = housing_cost_burden &gt; 0.3,
     severely_burdened = housing_cost_burden &gt; 0.5
@@ -2841,7 +2837,7 @@ freq(data_clean$poverty_status_head)</code></pre>
 ## &lt;NA&gt;                  506237      0.046</code></pre>
 </div>
 <div id="education-head-of-household" class="section level3">
-<h3>13. Education (head of household)</h3>
+<h3>13. Education (HEAD OF HOUSEHOLD)</h3>
 <pre class="r"><code>data_clean &lt;- data_clean %&gt;%
   mutate(
     education_head = case_when(
@@ -3015,12 +3011,11 @@ was allocated (imputed) by the Census Bureau</li>
     has_foodstamps
   )</code></pre>
 <pre class="r"><code>saveRDS(households,&quot;../data/clean/01_IPA_cleaning_household_clean.rds&quot;)</code></pre>
-<pre class="r"><code>#create_report(households)</code></pre>
 <pre class="r"><code>rm(list = ls(all.names = TRUE))
 gc()</code></pre>
 <pre><code>##             used  (Mb) gc trigger    (Mb) limit (Mb)   max used    (Mb)
-## Ncells   2772873 148.1   44746492  2389.8         NA   55933114  2987.2
-## Vcells 111436061 850.2 1633468644 12462.4      16384 2041835805 15578.0</code></pre>
+## Ncells   2772843 148.1   44740224  2389.4         NA   55925279  2986.8
+## Vcells 111435999 850.2 1633468649 12462.4      16384 2041835811 15578.0</code></pre>
 </div>
 </div>
 
